@@ -76,14 +76,20 @@ http://192.168.4.1
 
 | Part | Description | Link |
 |----|------------|------|
-| Microcontroller | ESP32 Lolin S2 Mini | [LINK TO SHOP] |
-| Power | USB-C PD Trigger Board (5V configurable) | [LINK TO SHOP] |
-| LED Strip | WS2812B (ECO), 4m, 60 LEDs/m | [LINK TO SHOP] |
-| Buttons | 4× 60mm Arcade Buttons (Red, Green, Blue, White) | [LINK TO SHOP] |
-| Audio Amp | MAX98357A I2S Amplifier | [LINK TO SHOP] |
-| Speaker | 4Ω 3W Speaker | [LINK TO SHOP] |
-| Case | 3D-Printed Case (STL files in `/stl`) | — |
-| Misc | Wires, soldering iron, 45W+ USB-C PSU | — |
+| Microcontroller | ESP32 Lolin S2 Mini | [[[LINK TO SHOP]](https://www.amazon.com/HiLetgo-ESP32-S2FN4R2-ESP32-S2-Type-C-Connect/dp/B0B291LZ99)](https://de.aliexpress.com/item/1005006828096971.html) |
+| Power | USB-C PD Trigger Board (5V configurable) | [LINK TO SHOP] https://de.aliexpress.com/item/1005007010060543.html |
+| LED Strip | WS2812B (ECO), 4m, 60 LEDs/m | [LINK TO SHOP] https://de.aliexpress.com/item/1005007889104592.html |
+| Buttons | 4× 60mm Arcade Buttons (Red, Green, Blue, White) | [LINK TO SHOP] https://de.aliexpress.com/item/1005008893549021.html|
+| Audio Amp | MAX98357A I2S Amplifier | [LINK TO SHOP] https://de.aliexpress.com/item/1005010526780490.html|
+| Speaker | 4Ω 3W Speaker | [LINK TO SHOP] https://de.aliexpress.com/item/1005008626624201.html |
+| Case | 3D-Printed Case (STL files in `/stl`) | MAKERWORLD |
+| Misc | Wires, soldering iron, 45W+ USB-C PSU | EBAY or your Spareparts box :-) I used a 45W USBc Charger from an old Notebook |
+
+ALL LINKS ARE NON Affiliate Links. Best you can do: Buy at your local small Maker-store.
+Total Costs ~ 35-40EUR (LED Stripe is pretty expensive if you choose a coated one)
+
+<img width="399" height="279" alt="image" src="https://github.com/user-attachments/assets/9e0846d6-4112-45e3-a35b-c25188706ff3" />
+
 
 ---
 
@@ -94,7 +100,8 @@ http://192.168.4.1
 ⚠️ **Important:** Configure your PD Trigger Board to output **5V**.
 
 - Connect **VBUS (+)** and **GND (−)** from the PD board directly to the LED strip
-- Branch VBUS and GND to power the ESP32 (`VBUS` + `GND`)
+- Branch VBUS and GND to power the ESP32 (`VBUS` + `GND`) 
+- use a WAGO or built a small cable tree.
 
 📷 *Insert power wiring photo here*
 
@@ -102,7 +109,7 @@ http://192.168.4.1
 
 ### 2️⃣ Button Wiring (Lolin S2 Mini)
 
-- One leg of each button → **GND**
+- One leg of each button → **GND**  -> you can connect all ground legs together.
 - Other leg → GPIO pin
 
 | Button Function | Color | ESP32 Pin |
