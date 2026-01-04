@@ -19,7 +19,7 @@ You control a spaceship (a single dot of light) on one end of the strip, shootin
 - **10 Unique Levels**  
   Progression from simple enemies to the ultimate RGB Overlord.
 - **Web Interface**  
-  Configure game speed, brightness, difficulty, and Wi-Fi settings directly from your smartphone.
+  Configure game speed, brightness, difficulty, LED length and Wi-Fi settings directly from your smartphone.
 - **Responsive Audio**  
   8-bit retro sound effects for shooting, explosions, and alarms via I2S.
 
@@ -47,8 +47,10 @@ Only players with perfect reflexes will survive the chromatic onslaught.
 
 🚫 **DO NOT power this project solely via the ESP32 USB port!**
 
-- This game can drive **100–300 LEDs**
+- This game can drive **100–300 LEDs** --> 240 are recommended
 - Full white brightness can exceed standard USB current limits
+- ⚠️ ⚠️ CHECK YOUR wriring ! Do NOT connect ESP32 to your PC while LEDs are connected to ESP32! DO NOT connect ESP32 to your PC while external Power Source is still connected to your setup! ⚠️ ⚠️ 
+
 
 ### ✅ Power Requirements
 - **5V high-power supply (minimum 5A recommended)**
@@ -89,6 +91,7 @@ ALL LINKS ARE NON Affiliate Links. Best you can do: Buy at your local small Make
 Total Costs ~ 35-40EUR (LED Stripe is pretty expensive if you choose a coated one)
 
 <img width="399" height="279" alt="image" src="https://github.com/user-attachments/assets/9e0846d6-4112-45e3-a35b-c25188706ff3" />
+
 You can choose more or less every ESP32 Board of choice. Just ask ChatGPT which GPIOs you must choose instead.
 
 ---
@@ -213,6 +216,12 @@ The board should now appear as a COM port.
 ➡️ After upload, press **RST** once to start the game
 
 ---
+
+### First steps
+1. CHECK YOUR wriring ! Do NOT connect ESP32 to your PC while LEDs are connected to ESP32! DO NOT connect ESP32 to your PC while external Power Source is still connected to your setup!
+2. Connect to Wifi and configure number of LEDs
+3. Play the game
+
 
 ## 🐛 Troubleshooting
 
