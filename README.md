@@ -76,7 +76,7 @@ http://192.168.4.1
 
 | Part | Description | Link |
 |----|------------|------|
-| Microcontroller | ESP32 Lolin S2 Mini | [[[LINK TO SHOP]](https://www.amazon.com/HiLetgo-ESP32-S2FN4R2-ESP32-S2-Type-C-Connect/dp/B0B291LZ99)](https://de.aliexpress.com/item/1005006828096971.html) |
+| Microcontroller | ESP32 Lolin S2 Mini | [LINK TO SHOP] (https://www.amazon.com/HiLetgo-ESP32-S2FN4R2-ESP32-S2-Type-C-Connect/dp/B0B291LZ99)](https://de.aliexpress.com/item/1005006828096971.html) |
 | Power | USB-C PD Trigger Board (5V configurable) | [LINK TO SHOP] https://de.aliexpress.com/item/1005007010060543.html |
 | LED Strip | WS2812B (ECO), 4m, 60 LEDs/m | [LINK TO SHOP] https://de.aliexpress.com/item/1005007889104592.html |
 | Buttons | 4× 60mm Arcade Buttons (Red, Green, Blue, White) | [LINK TO SHOP] https://de.aliexpress.com/item/1005008893549021.html|
@@ -89,7 +89,7 @@ ALL LINKS ARE NON Affiliate Links. Best you can do: Buy at your local small Make
 Total Costs ~ 35-40EUR (LED Stripe is pretty expensive if you choose a coated one)
 
 <img width="399" height="279" alt="image" src="https://github.com/user-attachments/assets/9e0846d6-4112-45e3-a35b-c25188706ff3" />
-
+You can choose more or less every ESP32 Board of choice. Just ask ChatGPT which GPIOs you must choose instead.
 
 ---
 
