@@ -191,6 +191,11 @@ Then:
 
 ## 🚀 How to Flash (Upload Code)
 
+copy the code from .ino file over the new created project. 
+There are 2 Versions. 
+1D_NOsound.ino  ---> no sound , speaker required
+1DRGB_invader.ino ---> full version of the game
+
 ⚠️ The Lolin S2 Mini can be tricky to enter upload mode.
 
 ### Cable Check
