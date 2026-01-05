@@ -31,7 +31,7 @@ Prepare yourself for three distinct boss encounters:
 
 ### 🧠 Masterblaster (Level 3)
 A tactical genius. Uses energy barriers to protect its core.  
-**Timing is everything** — blind firing won’t help you here.
+Be aware when he is charging his Masterblaster weapon!
 
 ### 🛡 The Tank (Level 6)
 Heavily armored and relentless. Moves slowly but absorbs damage like a sponge.  
@@ -48,15 +48,14 @@ Only players with perfect reflexes will survive the chromatic onslaught.
 🚫 **DO NOT power this project solely via the ESP32 USB port!**
 
 - This game can drive **100–300 LEDs** --> 240 are recommended
-- Full white brightness can exceed standard USB current limits
-- ⚠️ ⚠️ CHECK YOUR wriring ! Do NOT connect ESP32 to your PC while LEDs are connected to ESP32! DO NOT connect ESP32 to your PC while external Power Source is still connected to your setup! ⚠️ ⚠️ 
+⚠️ ⚠️ CHECK YOUR wriring ! Do NOT connect ESP32 to your PC while LEDs are connected to ESP32! DO NOT connect ESP32 to your PC while external Power Source is still connected to your setup! ⚠️ ⚠️ 
 
 
 ### ✅ Power Requirements
-- **5V high-power supply (minimum 5A recommended)**
+- **5V high-power supply (minimum 5A, 7-10A recommended e.g. 45W)**
 - **Recommended:**  
   A recycled **45W+ USB-C laptop charger** combined with a **USB-C PD Trigger Board** (set to 5V)
-
+  You can also skip the USBC PD and direktly connect everything to a 5V 10A power supply
 ---
 
 ## 📡 Quick Start: Wi-Fi Connection
@@ -85,10 +84,10 @@ http://192.168.4.1
 | Audio Amp | MAX98357A I2S Amplifier | [LINK TO SHOP] https://de.aliexpress.com/item/1005010526780490.html|
 | Speaker | 4Ω 3W Speaker | [LINK TO SHOP] https://de.aliexpress.com/item/1005008626624201.html |
 | Case | 3D-Printed Case (STL files in `/stl`) | MAKERWORLD |
-| Misc | Wires, soldering iron, 45W+ USB-C PSU | EBAY or your Spareparts box :-) I used a 45W USBc Charger from an old Notebook |
+| Misc | Wires, soldering iron, 45W+ USB-C PSU | EBAY or your Spareparts box :-) I used a 45W USBc Charger from an old Notebook  or https://de.aliexpress.com/item/1005002351195556.html |
 
 ALL LINKS ARE NON Affiliate Links. Best you can do: Buy at your local small Maker-store.
-Total Costs ~ 35-40EUR (LED Stripe is pretty expensive if you choose a coated one)
+Total Costs ~ 35-50EUR (LED Stripe is pretty expensive if you choose a coated one)
 
 <img width="399" height="279" alt="image" src="https://github.com/user-attachments/assets/9e0846d6-4112-45e3-a35b-c25188706ff3" />
 
@@ -100,9 +99,9 @@ You can choose more or less every ESP32 Board of choice. Just ask ChatGPT which 
 
 ### 1️⃣ Power Setup (USB-C PD Board)
 
-⚠️ **Important:** Configure your PD Trigger Board to output **5V**.
+⚠️ **Important:** Configure your USBC PD Trigger Board to output **5V**.
 
-- Connect **VBUS (+)** and **GND (−)** from the PD board directly to the LED strip
+- Connect **VBUS (+)** and **GND (−)** from the USBC PD board directly to the LED strip
 - Branch VBUS and GND to power the ESP32 (`VBUS` + `GND`) 
 - use a WAGO or built a small cable tree.
 
