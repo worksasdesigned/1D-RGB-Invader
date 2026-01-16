@@ -51,10 +51,10 @@ Only players with perfect reflexes will survive the chromatic onslaught.
 
 
 ### ✅ Power Requirements
-- **5V high-power supply (minimum 5A, 7-10A recommended e.g. 45W)**
+- **5V high-power supply (minimum 2A, 5-7A recommended e.g. 40W) brightness 100% requires ~5A**
 - **Recommended:**  
   A recycled **45W+ USB-C laptop charger** combined with a **USB-C PD Trigger Board** (set to 5V)
-  You can also skip the USBC PD and directly connect everything to a 5V 10A power supply
+  You can also skip the USBC PD and directly connect everything to a 5V 8A power supply
 ---
 
 ## 📡 Quick Start: Wi-Fi Connection
