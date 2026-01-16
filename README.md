@@ -220,8 +220,8 @@ The board should now appear as a COM port.
 
 **LEDs flicker / wrong colors**  
 → Ensure LED strip GND is connected to ESP32 GND.
-→ Ensure LED datawire is short. Sometimes a small resistor ~300Ohm will help. or use a single LED VERY close to the data pin. ESP32 provides dataflow with 3.3V WS2812B likes 5V data signal.  
-
+→ Ensure LED datawire is short. Sometimes a small resistor ~300-470Ohm will help. or use a single LED VERY close to the data pin. ESP32 provides dataflow with 3.3V WS2812B likes 5V data signal.  
+→ Level Shifter LED (Opfer-LED) can be setup in the Websettings. Use an extra WS2812B LED (simply cut one from the stripe)  with seperate power connection and a 1n4007 (ring towards LED side) in the 5V power line.
 
 ---
 
