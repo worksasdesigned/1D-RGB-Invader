@@ -68,7 +68,10 @@ Password: 12345678
 2. Open your browser and go to:
 http://192.168.4.1
 
+3. setup number of LEDs and brightness
+   
 (Usually opens automatically)
+![photo_2026-01-16_09-27-34](https://github.com/user-attachments/assets/4f94db63-7bee-442a-bbdf-519abf3f6846)
 
 ---
 
