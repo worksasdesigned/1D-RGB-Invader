@@ -208,7 +208,7 @@ The board should now appear as a COM port.
 
 ### First steps
 1. CHECK YOUR wriring ! Do NOT connect ESP32 to your PC while LEDs are connected to ESP32! DO NOT connect ESP32 to your PC while external Power Source is still connected to your setup!
-2. Connect to Wifi and configure number of LEDs
+2. push reset button (to GPIO 9 connected) for 3 seconds and release. --> LEDs are blue --> Connect to Wifi and configure number of LEDs and brightness
 3. Play the game
 
 
