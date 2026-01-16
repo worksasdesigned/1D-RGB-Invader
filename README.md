@@ -3,7 +3,7 @@ ESP32 powered WS2812B 1D Space Invader inspired game
 
 https://github.com/user-attachments/assets/9a7cbed4-157b-47ac-b319-e42f20a55934
 
-# 👾👾 Ultimate RGB Invaders 👾
+# 👾👾 Ultimate RGB Invaders 👾👾( no sound Version)
 
 **A 1-Dimensional Arcade Shooter on a WS2812B LED Strip powered by ESP32**
 
@@ -20,8 +20,7 @@ You control a spaceship (a single dot of light) on one end of the strip, shootin
   Progression from simple enemies to the ultimate RGB Overlord.
 - **Web Interface**  
   Configure game speed, brightness, difficulty, LED length and Wi-Fi settings directly from your smartphone.
-- **Responsive Audio**  
-  8-bit retro sound effects for shooting, explosions, and alarms via I2S.
+
 
 ---
 
@@ -60,7 +59,7 @@ Only players with perfect reflexes will survive the chromatic onslaught.
 
 ## 📡 Quick Start: Wi-Fi Connection
 
-Once powered on, the game creates its own Wi-Fi hotspot.
+Once powered on, you can push and hold the 4th button (reset button) for 3 seconds. LED will turn blue and the game creates its own Wi-Fi hotspot.
 
 1. Connect to the Wi-Fi network:
 ESP32-Invader-Ult
@@ -80,9 +79,9 @@ http://192.168.4.1
 | Microcontroller | ESP32 Lolin S2 Mini | [LINK TO SHOP] (https://www.amazon.com/HiLetgo-ESP32-S2FN4R2-ESP32-S2-Type-C-Connect/dp/B0B291LZ99)](https://de.aliexpress.com/item/1005006828096971.html) |
 | Power | USB-C PD Trigger Board (5V configurable) | [LINK TO SHOP] https://de.aliexpress.com/item/1005007010060543.html |
 | LED Strip | WS2812B (ECO), 4m, 60 LEDs/m | [LINK TO SHOP] https://de.aliexpress.com/item/1005007889104592.html |
-| Buttons | 4× 60mm Arcade Buttons (Red, Green, Blue, White) | [LINK TO SHOP] https://de.aliexpress.com/item/1005008893549021.html|
-| Audio Amp | MAX98357A I2S Amplifier | [LINK TO SHOP] https://de.aliexpress.com/item/1005010526780490.html|
-| Speaker | 4Ω 3W Speaker | [LINK TO SHOP] https://de.aliexpress.com/item/1005008626624201.html |
+| Buttons | 3× 60mm Arcade Buttons (Red, Green, Blue) | [LINK TO SHOP]
+https://de.aliexpress.com/item/1005008893549021.html|
+| Buttons | 1× 12mm Button | [LINK TO SHOP] https://de.aliexpress.com/item/1005010368828186.html|
 | Case | 3D-Printed Case (STL files in `/stl`) | MAKERWORLD |
 | Misc | Wires, soldering iron, 45W+ USB-C PSU | EBAY or your Spareparts box :-) I used a 45W USBc Charger from an old Notebook  or https://de.aliexpress.com/item/1005002351195556.html |
 
@@ -91,7 +90,7 @@ Total Costs ~ 35-50EUR (LED Stripe is pretty expensive if you choose a coated on
 
 <img width="399" height="279" alt="image" src="https://github.com/user-attachments/assets/9e0846d6-4112-45e3-a35b-c25188706ff3" />
 
-You can choose more or less every ESP32 Board of choice. Just ask ChatGPT which GPIOs you must choose instead.
+You can choose more or less every ESP32 Board of choice. Just ask ChatGPT which GPIOs you must choose instead. If you want to use the Sound Version you need a Dual Core ESP32 S3!
 
 ---
 
@@ -132,17 +131,7 @@ Too much solder = it won’t fit!
 
 ---
 
-### 3️⃣ Audio (MAX98357A)
 
-| MAX98357A Pin | ESP32 Pin |
-|-------------|-----------|
-| LRC | 12 |
-| BCLK | 14 |
-| DIN | 18 |
-| VIN | 5V (VBUS) |
-| GND | GND |
-
----
 
 ### 4️⃣ LED Data
 
@@ -194,9 +183,8 @@ Then:
 ## 🚀 How to Flash (Upload Code)
 
 copy the code from .ino file over the new created project. 
-There are 2 Versions. 
-1D_NOsound.ino  ---> no sound , speaker required
-1DRGB_invader.ino ---> full version of the game
+1D_NOsound.ino  ---> no sound (sound Version will be published later but ESP32 S3 required!)
+
 
 ⚠️ The Lolin S2 Mini can be tricky to enter upload mode.
 
