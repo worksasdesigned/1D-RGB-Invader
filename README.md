@@ -82,8 +82,7 @@ http://192.168.4.1
 | Microcontroller | ESP32 Lolin S2 Mini | [LINK TO SHOP] (https://www.amazon.com/HiLetgo-ESP32-S2FN4R2-ESP32-S2-Type-C-Connect/dp/B0B291LZ99)](https://de.aliexpress.com/item/1005006828096971.html) |
 | Power | USB-C PD Trigger Board (5V configurable) | [LINK TO SHOP] https://de.aliexpress.com/item/1005007010060543.html |
 | LED Strip | WS2812B (ECO), 4m, 60 LEDs/m | [LINK TO SHOP] https://de.aliexpress.com/item/1005007889104592.html |
-| Buttons | 3× 60mm Arcade Buttons (Red, Green, Blue) | [LINK TO SHOP]
-https://de.aliexpress.com/item/1005008893549021.html|
+| Buttons | 3× 60mm Arcade Buttons (Red, Green, Blue) | [LINK TO SHOP] https://de.aliexpress.com/item/1005008893549021.html|
 | Buttons | 1× 12mm Button | [LINK TO SHOP] https://de.aliexpress.com/item/1005010368828186.html|
 | Case | 3D-Printed Case (STL files in `/stl`) | MAKERWORLD |
 | Misc | Wires, soldering iron, 45W+ USB-C PSU | EBAY or your Spareparts box :-) I used a 45W USBc Charger from an old Notebook  or https://de.aliexpress.com/item/1005002351195556.html |
