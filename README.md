@@ -22,8 +22,8 @@ The source code is provided as an attached file.
 Simply copy & paste it into a new Arduino project.
 
 There are **two versions**:
-- with oldschool arcade sound  
-- without sound  
+- with oldschool arcade sound  (V 4.2)
+- without sound (V3.2) 
 
 Demo (no sound version):  
 *(insert link / media here)*
