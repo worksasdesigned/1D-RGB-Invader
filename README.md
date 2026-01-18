@@ -77,15 +77,15 @@ Failure results in:
 
 | Part | Description |
 |----|----|
-| MCU | **ESP32-S3 DevKitC-1 (N16R8 recommended)** |
-| LED Strip | WS2812B (ECO), 60 LEDs/m |
+| MCU | **ESP32-S3 DevKitC-1 ** |
+| LED Strip | WS2812B , 60 LEDs/m --> silicon coated / with diffusor recommended|
 | Audio Amp | MAX98357A I2S |
 | Speaker | 4 Ω / 3 W |
 | Buttons | 3× 60 mm arcade buttons |
 | Menu Button | 1× 12 mm momentary |
 | Power | USB-C PD trigger (fixed 5 V) |
-| PSU | USB-C power supply (≥45 W recommended) |
-| Misc | Wires, connectors, 3D printed case |
+| PSU | USB-C power supply (≥3A recommended) |
+| Misc | Wires, connectors, 3D printed case Hotglue as for every DIY project |
 
 **Typical LED length:** 2–4 m  
 **Estimated total cost:** ~35–50 €
@@ -141,6 +141,7 @@ Failure results in:
 - Partition: 16M (3MB APP / 9.9MB FATFS)
 - PSRAM: **Disabled**
 - USB CDC on Boot: **Disabled**
+These settings are compatible with cheap ESP32 S3 boards. Many AliExpress boards having issue with OPI RAM :-(
 
 ---
 
