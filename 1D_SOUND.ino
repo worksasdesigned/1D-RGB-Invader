@@ -1252,16 +1252,26 @@ void loop() {
           }
           else if (boss2State == B2_CHARGE) { if (now - bossActionTimer < (boss2Cfg.shotFreq * 100)) { if (now % 100 < 20) boss2LockedColor = random(1,4); } else { boss2State = B2_SHOOT; boss2ShotsFired = 0; bossActionTimer = now; int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=0; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.color = boss2LockedColor; } } } else if (boss2State == B2_SHOOT) { if (now - bossActionTimer > 150) { bossActionTimer = now; bossProjectiles.push_back({enemyFrontIndex, boss2LockedColor}); boss2ShotsFired++; if (boss2ShotsFired >= 10) { int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=3; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.active = true; } boss2State = B2_MOVE; boss2Section++; } } } 
       }
-      else if (currentBossType == 3) {
+else if (currentBossType == 3) {
+        // --- LOGIC: SAFE FIRE ZONE ---
+        // Wenn Strip > 180 LEDs (echtes Setup), nicht mehr schießen ab LED 70.
+        // Wenn Strip <= 180 LEDs (Test/Notfall), schießen bis kurz vor die Basis (Basis + 5).
+        float safeFireLimit = (config_num_leds > 180) ? 70.0 : (float)(config_homebase_size + 5);
+
+        // --- PHASE CHANGE TRIGGER ---
         if (boss3State == B3_MOVE && boss3PhaseIndex < 2 && enemyFrontIndex <= boss3Markers[boss3PhaseIndex]) {
              boss3State = B3_PHASE_CHANGE;
              bossActionTimer = now; 
         }
+
+        // --- STATE HANDLING ---
         if (boss3State == B3_MOVE) {
            float bStep = (float)boss3Cfg.moveSpeed / 60.0;
            enemyFrontIndex -= bStep;
            if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction(); }
-           if (boss3Cfg.shotFreq > 0 && (now - bossActionTimer > (boss3Cfg.shotFreq * 100))) { 
+
+           // CHECK: Nur schießen, wenn wir noch vor der Safe-Zone sind
+           if (enemyFrontIndex > safeFireLimit && boss3Cfg.shotFreq > 0 && (now - bossActionTimer > (boss3Cfg.shotFreq * 100))) { 
                bossActionTimer = now; 
                bossProjectiles.push_back({enemyFrontIndex, (int)random(1,4)}); 
            }
@@ -1278,7 +1288,10 @@ void loop() {
         else if (boss3State == B3_BURST) {
            if (now - bossActionTimer > 200) { 
                bossActionTimer = now; 
-               bossProjectiles.push_back({enemyFrontIndex, (int)random(1,8)}); 
+               // CHECK: Auch Burst-Attacken respektieren die Safe-Zone
+               if (enemyFrontIndex > safeFireLimit) {
+                   bossProjectiles.push_back({enemyFrontIndex, (int)random(1,8)}); 
+               }
                boss3BurstCounter++; 
                if (boss3BurstCounter >= boss3Cfg.burstCount) { 
                    boss3State = B3_WAIT; 
