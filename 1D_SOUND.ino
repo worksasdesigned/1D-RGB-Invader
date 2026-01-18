@@ -671,7 +671,7 @@ void applyProfileDefaults(String prefix) {
     boss1Cfg = {4, 60, 4, 30, 0, 0,0,0}; 
     boss2Cfg = {10, 60, 5, 40, 0, 85, 55, 30}; 
     // NEU: Balancing Update Boss 3
-    boss3Cfg = {7, 50, 3, 60, 5, 0,0,0}; 
+    boss3Cfg = {7, 50, 3, 60, 3, 0,0,0}; 
   } else if (prefix == "kid_") {
     // KIDS PROFILE
     levels[1] = {5, 15, 0}; levels[2] = {5, 20, 0}; levels[3] = {6, 25, 2}; 
@@ -1182,9 +1182,11 @@ void loop() {
           }
           else if (boss2State == B2_CHARGE) { if (now - bossActionTimer < (boss2Cfg.shotFreq * 100)) { if (now % 100 < 20) boss2LockedColor = random(1,4); } else { boss2State = B2_SHOOT; boss2ShotsFired = 0; bossActionTimer = now; int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=0; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.color = boss2LockedColor; } } } else if (boss2State == B2_SHOOT) { if (now - bossActionTimer > 150) { bossActionTimer = now; bossProjectiles.push_back({enemyFrontIndex, boss2LockedColor}); boss2ShotsFired++; if (boss2ShotsFired >= 10) { int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=3; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.active = true; } boss2State = B2_MOVE; boss2Section++; } } } 
       }
-      else if (currentBossType == 3) {
-        // TRIGGER FÜR 2 PHASEN
-        if (boss3PhaseIndex < 2 && enemyFrontIndex <= boss3Markers[boss3PhaseIndex]) {
+else if (currentBossType == 3) {
+        // --- KORREKTUR HIER ---
+        // Nur Trigger prüfen, wenn wir uns BEWEGEN (boss3State == B3_MOVE).
+        // Sonst resettet er den Timer im Phase-Change unendlich oft.
+        if (boss3State == B3_MOVE && boss3PhaseIndex < 2 && enemyFrontIndex <= boss3Markers[boss3PhaseIndex]) {
              boss3State = B3_PHASE_CHANGE;
              bossActionTimer = now; 
         }
@@ -1200,7 +1202,7 @@ void loop() {
            }
         } 
         else if (boss3State == B3_PHASE_CHANGE) {
-           // 4 Sekunden Wartezeit/Farbwechsel
+           // Jetzt sollte der Timer sauber hochlaufen
            if (now - bossActionTimer > 4000) { 
                boss3State = B3_BURST; 
                boss3BurstCounter = 0; 
@@ -1215,14 +1217,12 @@ void loop() {
                bossProjectiles.push_back({enemyFrontIndex, (int)random(1,8)}); 
                boss3BurstCounter++; 
                if (boss3BurstCounter >= boss3Cfg.burstCount) { 
-                   // NEU: Pause nach Burst
                    boss3State = B3_WAIT; 
                    bossActionTimer = now;
                } 
            }
         }
         else if (boss3State == B3_WAIT) {
-            // NEU: 2 Sekunden warten
             if (now - bossActionTimer > 2000) {
                 boss3State = B3_MOVE;
                 bossActionTimer = now; 
