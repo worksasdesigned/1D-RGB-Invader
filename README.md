@@ -18,13 +18,14 @@ You are about to turn a strip of lights into a battlefield. You control a spaces
 - Bosses ✔  
 - Highscores ✔  
 - Web Interface ✔ (because we are living in the future)
+- OTA updates ✔
+- fully adjustable and preset kids mode 
 
-The source code is provided as an attached file.  
-Simply copy & paste it into a new Arduino project.
+Simply copy & paste the .ino file into a new Arduino project.
 
 There are **two versions**:
-- with oldschool arcade sound  (V 4.2)
-- without sound (V3.2) 
+- with oldschool arcade sound (recommended latest Version) req. ESP32 S3
+- without sound (V3.2) - running on ESP32 S2
 
 Demo (no sound version):  
 *(insert link / media here)*
