@@ -1166,12 +1166,25 @@ void loop() {
         float bStep = (float)boss1Cfg.moveSpeed / 60.0;
         enemyFrontIndex -= bStep;
         if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction(); } 
-        if (now - bossActionTimer > (boss1Cfg.shotFreq * 100)) { 
-           bossActionTimer = now; 
-           int shotColor = 0; int frontColor = 0; if(bossSegments.size() > 0) frontColor = bossSegments[0].color;
-           if (random(100) < 20 && frontColor > 0) shotColor = frontColor; else shotColor = random(1,4);
+          if (now - bossActionTimer > (boss1Cfg.shotFreq * 100)) { 
+                bossActionTimer = now; 
+                 int shotColor = 0; int frontColor = 0; 
+                if(bossSegments.size() > 0) frontColor = bossSegments[0].color;
+                
+                // --- FIX START ---
+                // 20% Chance: Er schießt genau die Farbe, die er vorne hat (schwer zu blocken)
+                if (random(100) < 20 && frontColor > 0) {
+                    shotColor = frontColor; 
+                } else {
+                    // 80% Chance: Er MUSS eine andere Farbe wählen.
+                    // Wir würfeln solange, bis shotColor ungleich frontColor ist.
+                    do {
+                      shotColor = random(1,4);
+                    } while(shotColor == frontColor && frontColor > 0);
+                }
+                // --- FIX ENDE ---
            bossProjectiles.push_back({enemyFrontIndex, shotColor}); 
-        } 
+        }
       }
       else if (currentBossType == 2) { 
           if (boss2State == B2_MOVE) {
