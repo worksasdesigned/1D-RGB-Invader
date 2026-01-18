@@ -1,5 +1,5 @@
 // ==========================================================================
-// PROJECT: ULTIMATE RGB INVADERS - V9.5 (AUDIO CONTROL + CLEAN HITS)
+// PROJECT: ULTIMATE RGB INVADERS - V9.6 (BALANCED BOSS 3)
 // HARDWARE: ESP32-S3 (N16), MAX98357A, WS2812B
 // CORE VERSION: 2.0.17 (Required!)
 // ==========================================================================
@@ -32,7 +32,7 @@
 #define PIN_BTN_GREEN   17
 #define PIN_BTN_WHITE   18 
 
-#define CONFIG_VERSION  29 // Version bump for Audio Settings
+#define CONFIG_VERSION  30 // Version bump
 #define FRAME_DELAY     16    // 16ms = approx. 60 FPS
 #define INPUT_BUFFER_MS 60 
 #define SAMPLE_RATE     44100
@@ -53,7 +53,8 @@ enum GameState {
 };
 
 enum Boss2State { B2_MOVE, B2_CHARGE, B2_SHOOT };
-enum Boss3State { B3_MOVE, B3_PHASE_CHANGE, B3_BURST };
+// NEU: B3_WAIT hinzugefügt für faire Pause
+enum Boss3State { B3_MOVE, B3_PHASE_CHANGE, B3_BURST, B3_WAIT };
 
 struct LevelConfig { int speed; int length; int bossType; };
 struct BossConfig { int moveSpeed; int shotSpeed; int hpPerLed; int shotFreq; int burstCount; int m1; int m2; int m3; };
@@ -72,15 +73,15 @@ QueueHandle_t audioQueue;
 TaskHandle_t audioTaskHandle; 
 
 // Default Sound Strings
-const String DEF_SND_START      = "523,80;659,80;784,80;1047,300";
-const String DEF_SND_WIN        = "523,80;659,80;784,80;1047,300;0,150;1047,60;1319,60";
-const String DEF_SND_LOSE       = "370,100;349,100;330,100;311,400";
-const String DEF_SND_MISTAKE    = "60,150";
-const String DEF_SND_SHOT_BLUE  = "698,50;659,50";
-const String DEF_SND_SHOT_RED   = "784,30;1047,30;1319,30";
-const String DEF_SND_SHOT_GREEN = "523,30;554,30;523,30";
-const String DEF_SND_SHOT_WHITE = "1047,20;1319,20;1568,20;2093,4";
-const String DEF_SND_HIT        = "2093,30";
+const String DEF_SND_START       = "523,80;659,80;784,80;1047,300";
+const String DEF_SND_WIN         = "523,80;659,80;784,80;1047,300;0,150;1047,60;1319,60";
+const String DEF_SND_LOSE        = "370,100;349,100;330,100;311,400";
+const String DEF_SND_MISTAKE     = "60,150";
+const String DEF_SND_SHOT_BLUE   = "698,50;659,50";
+const String DEF_SND_SHOT_RED    = "784,30;1047,30;1319,30";
+const String DEF_SND_SHOT_GREEN  = "523,30;554,30;523,30";
+const String DEF_SND_SHOT_WHITE  = "1047,20;1319,20;1568,20;2093,4";
+const String DEF_SND_HIT         = "2093,30";
 
 String cfg_snd_start, cfg_snd_win, cfg_snd_lose, cfg_snd_mistake;
 String cfg_snd_shot_b, cfg_snd_shot_r, cfg_snd_shot_g, cfg_snd_shot_w, cfg_snd_hit;
@@ -104,7 +105,7 @@ int config_num_leds = 100;
 int config_brightness_pct = 50; 
 int config_start_level = 1;
 bool config_sacrifice_led = true; 
-int config_homebase_size = 3;      
+int config_homebase_size = 3;       
 int config_shot_speed_pct = 100; 
 int ledStartOffset = 1; 
 
@@ -147,10 +148,13 @@ Boss2State boss2State = B2_MOVE;
 int boss2Section = 0; int boss2ShotsFired = 0; int boss2LockedColor = 1; int markerPos[3]; 
 
 Boss3State boss3State = B3_MOVE;
-bool boss3PhaseTriggered = false; int boss3BurstCounter = 0; int boss3MarkerPos = 0;
+// NEU: Phase Index statt Boolean für 2 Stopps
+int boss3PhaseIndex = 0; 
+int boss3BurstCounter = 0; 
+int boss3Markers[2]; // Speicher für 2 Marker Positionen
 
 int currentScore = 0; int highScore = 0; int lastGames[3] = {0, 0, 0};
-unsigned long levelStartTime = 0; int levelMaxPossibleScore = 0; int levelAchievedScore = 0;    
+unsigned long levelStartTime = 0; int levelMaxPossibleScore = 0; int levelAchievedScore = 0;     
 
 // --------------------------------------------------------------------------
 // 3. HELPER FUNCTIONS
@@ -224,7 +228,6 @@ void playToneI2S(int freq, int durationMs) {
     int halfPeriod = SAMPLE_RATE / freq / 2;
     
     // VOLUME CONTROL APPLIED HERE
-    // Map 0-100% to Amplitude 0-10000 (approx safe range for MAX98357A without clipping too much)
     int16_t volume = map(config_volume_pct, 0, 100, 0, 10000); 
     
     for (int i = 0; i < samples; i++) {
@@ -480,14 +483,19 @@ void updateLevelIntro() {
       } 
       else if (currentBossType == 3) {
         for(int i=0; i<15; i++) { int mixColor = random(4, 7); bossSegments.push_back({mixColor, boss3Cfg.hpPerLed, boss3Cfg.hpPerLed, true, i}); }
-        boss3State = B3_MOVE; boss3PhaseTriggered = false; boss3MarkerPos = config_num_leds / 2; bossActionTimer = millis();
+        boss3State = B3_MOVE; 
+        
+        // NEU: Setup für 2 Phasen
+        boss3PhaseIndex = 0;
+        boss3Markers[0] = (int)(config_num_leds * 0.66);
+        boss3Markers[1] = (int)(config_num_leds * 0.50);
+        
+        bossActionTimer = millis();
       }
       currentState = STATE_BOSS_PLAYING;
     } else {
-      // --- HIER LAG VERMUTLICH DER FEHLER (verschluckter Block) ---
       enemies.clear(); shots.clear(); bossProjectiles.clear();
       int count = levels[currentLevel].length;
-      // Sicherstellen, dass count > 0 ist
       if (count <= 0) count = 10; 
       
       for (int i = 0; i < count; i++) {
@@ -662,7 +670,8 @@ void applyProfileDefaults(String prefix) {
     levels[10] = {14, 60, 3}; 
     boss1Cfg = {4, 60, 4, 30, 0, 0,0,0}; 
     boss2Cfg = {10, 60, 5, 40, 0, 85, 55, 30}; 
-    boss3Cfg = {10, 50, 4, 60, 5, 0,0,0}; 
+    // NEU: Balancing Update Boss 3
+    boss3Cfg = {7, 50, 3, 60, 5, 0,0,0}; 
   } else if (prefix == "kid_") {
     // KIDS PROFILE
     levels[1] = {5, 15, 0}; levels[2] = {5, 20, 0}; levels[3] = {6, 25, 2}; 
@@ -670,7 +679,7 @@ void applyProfileDefaults(String prefix) {
     levels[7] = {8, 30, 0}; levels[8] = {8, 35, 0}; levels[9] = {10, 20, 0}; levels[10] = {14, 60, 3}; 
     boss1Cfg = {4, 60, 2, 40, 0, 0,0,0}; 
     boss2Cfg = {7, 40, 3, 40, 0, 85, 55, 30}; 
-    boss3Cfg = {6, 40, 3, 60, 3, 0,0,0}; 
+    boss3Cfg = {6, 40, 2, 70, 1, 0,0,0}; 
   } else { 
     // PRO PROFILE
     for(int i=1; i<=10; i++) { levels[i] = {5+i, 15+(i*5), 0}; }
@@ -686,11 +695,6 @@ void saveCurrentToPreferences(String prefix) {
   preferences.putInt((prefix+"leds").c_str(), config_num_leds);
   preferences.putInt((prefix+"bright").c_str(), config_brightness_pct);
   preferences.putInt((prefix+"startlvl").c_str(), config_start_level);
-  
-  // Save Audio Settings (per profile or global? Let's keep it global in general, 
-  // but code below saves it per profile if prefix is used, wait...
-  // The 'config_sound_on' and 'config_volume' are usually global hardware settings.
-  // I will save them globally in 'handleSave' and not per profile to avoid confusion.
   
   for(int i=1; i<=10; i++) { 
     preferences.putInt((prefix+"l"+String(i)+"s").c_str(), levels[i].speed); 
@@ -890,7 +894,7 @@ String getHTML() {
   h += "<script>function updateCalc() { var count = parseInt(document.getElementById('ledCount').value)||0; var brightPct = parseInt(document.getElementById('brightness').value)||50; document.getElementById('brightVal').innerText = brightPct + '%'; var warn = document.getElementById('warning-box'); if (count > 0) { var brightFactor = brightPct / 100.0; var amps = ((count * 15 * brightFactor) + 120) / 1000; document.getElementById('ampValue').innerText = amps.toFixed(2) + ' A'; if(amps > 5.0) { warn.style.display='block'; warn.innerText='WARNING: > 5A! High Power PSU required!'; } else warn.style.display='none'; } } function toggleIP() { var x = document.getElementById('ipsettings'); if(document.getElementById('chkStatic').checked) x.style.display='block'; else x.style.display='none'; } function confirmReset() { return confirm('Really delete all settings and factory reset?'); } window.onload = function(){ updateCalc(); toggleIP(); };</script>";
   h += "</head><body>";
   h += "<div class='neon-text'>RGB INVADERS</div>";
-  h += "<div class='sub-head'>created by Qwer.Tzui / worksasdesigned - Version 9.5</div>";
+  h += "<div class='sub-head'>created by Qwer.Tzui / worksasdesigned - Version 9.6</div>";
   h += "<div class='score-box'>ALL TIME BEST<div class='big-score'>" + String(highScore) + "</div>";
   h += "<div class='small-score'>Last Games: " + String(lastGames[0]) + " | " + String(lastGames[1]) + " | " + String(lastGames[2]) + "</div></div>";
   
@@ -1098,9 +1102,6 @@ void loop() {
                 flashPixel((int)shots[i].position); 
                 remove = true; 
                 
-                // NO SOUND ON NORMAL HITS (CLEANER AUDIO)
-                // playSound(EVT_HIT_SUCCESS); 
-                
                 checkWinCondition(); 
              } else { 
                 enemies.insert(enemies.begin(), {shots[i].color, 0.0}); 
@@ -1129,6 +1130,7 @@ void loop() {
                bool vulnerable = false; 
                if (currentBossType == 1) vulnerable = true; 
                else if (currentBossType == 2) { if (boss2State == B2_MOVE && bossSegments[hitIndex].active) vulnerable = true; } 
+               // NEU: Boss 3 ist verwundbar, außer er wechselt gerade Farbe
                else if (currentBossType == 3) { if (boss3State != B3_PHASE_CHANGE) vulnerable = true; } 
                
                if (vulnerable) { 
@@ -1181,18 +1183,50 @@ void loop() {
           else if (boss2State == B2_CHARGE) { if (now - bossActionTimer < (boss2Cfg.shotFreq * 100)) { if (now % 100 < 20) boss2LockedColor = random(1,4); } else { boss2State = B2_SHOOT; boss2ShotsFired = 0; bossActionTimer = now; int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=0; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.color = boss2LockedColor; } } } else if (boss2State == B2_SHOOT) { if (now - bossActionTimer > 150) { bossActionTimer = now; bossProjectiles.push_back({enemyFrontIndex, boss2LockedColor}); boss2ShotsFired++; if (boss2ShotsFired >= 10) { int startRange = 0; int endRange = 0; if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=3; endRange=5; } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.active = true; } boss2State = B2_MOVE; boss2Section++; } } } 
       }
       else if (currentBossType == 3) {
-        if (!boss3PhaseTriggered && enemyFrontIndex <= boss3MarkerPos) { boss3State = B3_PHASE_CHANGE; boss3PhaseTriggered = true; bossActionTimer = now; }
+        // TRIGGER FÜR 2 PHASEN
+        if (boss3PhaseIndex < 2 && enemyFrontIndex <= boss3Markers[boss3PhaseIndex]) {
+             boss3State = B3_PHASE_CHANGE;
+             bossActionTimer = now; 
+        }
+
         if (boss3State == B3_MOVE) {
            float bStep = (float)boss3Cfg.moveSpeed / 60.0;
            enemyFrontIndex -= bStep;
            if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction(); }
-           if (boss3Cfg.shotFreq > 0 && (now - bossActionTimer > (boss3Cfg.shotFreq * 100))) { bossActionTimer = now; bossProjectiles.push_back({enemyFrontIndex, (int)random(1,4)}); }
+           
+           if (boss3Cfg.shotFreq > 0 && (now - bossActionTimer > (boss3Cfg.shotFreq * 100))) { 
+               bossActionTimer = now; 
+               bossProjectiles.push_back({enemyFrontIndex, (int)random(1,4)}); 
+           }
         } 
         else if (boss3State == B3_PHASE_CHANGE) {
-           if (now - bossActionTimer > 4000) { boss3State = B3_BURST; boss3BurstCounter = 0; bossActionTimer = now; for(auto &seg : bossSegments) seg.color = random(4, 8); }
+           // 4 Sekunden Wartezeit/Farbwechsel
+           if (now - bossActionTimer > 4000) { 
+               boss3State = B3_BURST; 
+               boss3BurstCounter = 0; 
+               bossActionTimer = now; 
+               for(auto &seg : bossSegments) seg.color = random(4, 8); 
+               boss3PhaseIndex++; 
+           }
         }
         else if (boss3State == B3_BURST) {
-           if (now - bossActionTimer > 200) { bossActionTimer = now; bossProjectiles.push_back({enemyFrontIndex, (int)random(1,8)}); boss3BurstCounter++; if (boss3BurstCounter >= boss3Cfg.burstCount) { boss3State = B3_MOVE; } }
+           if (now - bossActionTimer > 200) { 
+               bossActionTimer = now; 
+               bossProjectiles.push_back({enemyFrontIndex, (int)random(1,8)}); 
+               boss3BurstCounter++; 
+               if (boss3BurstCounter >= boss3Cfg.burstCount) { 
+                   // NEU: Pause nach Burst
+                   boss3State = B3_WAIT; 
+                   bossActionTimer = now;
+               } 
+           }
+        }
+        else if (boss3State == B3_WAIT) {
+            // NEU: 2 Sekunden warten
+            if (now - bossActionTimer > 2000) {
+                boss3State = B3_MOVE;
+                bossActionTimer = now; 
+            }
         }
       }
     }
@@ -1200,7 +1234,17 @@ void loop() {
     FastLED.clear();
     if (currentState == STATE_BOSS_PLAYING) {
       if (currentBossType == 2) { for(int i=0; i<3; i++) { if (markerPos[i] < enemyFrontIndex) leds[markerPos[i]+ledStartOffset] = CRGB(50,0,0); } }
-      else if (currentBossType == 3) { if(!boss3PhaseTriggered) leds[boss3MarkerPos+ledStartOffset] = CRGB(50,0,0); leds[boss3MarkerPos+ledStartOffset+1] = CRGB(50,0,0); }
+      else if (currentBossType == 3) { 
+          // Marker anzeigen solange Phase nicht abgeschlossen
+          if(boss3PhaseIndex <= 0) {
+            leds[boss3Markers[0]+ledStartOffset] = CRGB(50,0,0); 
+            leds[boss3Markers[0]+ledStartOffset+1] = CRGB(50,0,0); 
+          }
+          if(boss3PhaseIndex <= 1) {
+            leds[boss3Markers[1]+ledStartOffset] = CRGB(50,0,0); 
+            leds[boss3Markers[1]+ledStartOffset+1] = CRGB(50,0,0); 
+          }
+      }
     }
     if (currentState == STATE_PLAYING) { 
         for(int i=0; i<enemies.size(); i++) { 
