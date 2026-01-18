@@ -8,206 +8,144 @@ https://youtube.com/shorts/Ps4TY1oXYPk?si=DmJbKW9S6Qn9KOkK
 
 https://github.com/user-attachments/assets/9a7cbed4-157b-47ac-b319-e42f20a55934
 
-# 👾 Ultimate 1D RGB Invaders (v3.2 & v4.2) 👾
+# 👾 Ultimate 1D RGB Invaders 👾  
+ESP32-powered WS2812B 1D arcade shooter inspired by Space Invaders
 
-**The 1D Arcade Shooter that proves you don't need 4K graphics to sweat.**
-
-Welcome to **Ultimate RGB Invaders**.  
-You are about to turn a strip of lights into a battlefield. You control a spaceship (a single, brave pixel) fighting against waves of chromatic enemies.
-
-- Bosses ✔  
-- Highscores ✔  
-- Web Interface ✔ (because we are living in the future)
-- OTA updates ✔
-- fully adjustable and preset kids mode 
-
-Simply copy & paste the .ino file into a new Arduino project.
-
-There are **two versions**:
-- with oldschool arcade sound (recommended latest Version) req. ESP32 S3
-- without sound (V3.2) - running on ESP32 S2
-
-Demo (no sound version):  
-*(insert link / media here)*
+Turn a LED strip into a playable arcade game.  
+One pixel is your ship. The rest is hostile.
 
 ---
 
-## ☠️ THE "DO NOT EXPLODE" SECTION ☠️  
-**READ THIS OR CRY LATER.**
+## ⚠️ Project Status & Version Recommendation (READ FIRST)
 
-🚫 **NEVER** power this project solely via the ESP32 USB-C port.  
-The LEDs are hungry beasts. The ESP32 is a delicate flower. They do not share food.
+This project exists in **two hardware variants**:
 
-🔥 **MAGIC SMOKE WARNING**  
-Do **NOT** connect the ESP32 to your PC (USB) while the LEDs are powered by an external power supply.
+### ✅ Recommended & Actively Developed
+**Sound Edition – ESP32-S3**
+- Full arcade sound via I2S amplifier  
+- Web UI, OTA, highscores, bosses  
+- Actively developed and extended  
+- **This is the version you should build**
 
-**Scenario:**  
-You want to update the code?  
-→ Unplug the external power first!  
-→ Unplug the LED strip from the board if possible!
+### ⚠️ Legacy / Maintenance Only
+**Silent Edition – ESP32-S2**
+- No sound  
+- Fully functional  
+- **No new features planned**
+- Kept only for compatibility
 
-**Why?**  
-Sending 5 Amps through your PC's motherboard is an excellent way to buy a new PC.
-
----
-
-## 🛠 Hardware & Parts List
-
-### Choose your Fighter
-
-- **Version 1 (Silent)**  
-  The classic. Cheaper, easier to build.  
-  Uses **Lolin S2 Mini**.
-
-- **Version 2 (Sound Edition)**  
-  Full arcade experience with retro-synth audio.  
-  Uses **ESP32-S3**.
+➡️ **All main documentation below refers to the ESP32-S3 Sound Edition.**  
+➡️ ESP32-S2 instructions are collected **at the very end** to avoid confusion.
 
 ---
 
-## ☠️ THE "DO NOT EXPLODE" SECTION ☠️  
-*(Yes. Again. Because people skip it.)*
+## 🎮 Features (ESP32-S3 Sound Edition)
 
-🚫 **NEVER** power this project solely via the ESP32 USB-C port  
-(LEDs can draw **up to 5 Amps**).
-
-🔥 **Do NOT** connect the ESP32 to your PC while LEDs are externally powered.
-
----
-
-## 🧾 Parts & Cost Notes
-
-- All links are **NON-affiliate**
-- Best option: support your **local maker store**
-- **Estimated total cost:** ~35–50 EUR  
-  (LED strips get expensive if you choose coated ones)
+- Old-school arcade sound (I2S)
+- Boss fights
+- Highscore system
+- Web configuration interface
+- OTA firmware updates
+- Adjustable difficulty
+- Preset kids mode
+- Single `.ino` file (Arduino)
 
 ---
 
-## 📦 Shared Components (BOTH versions)
+## ☠️ POWER & SAFETY – DO NOT SKIP ☠️
 
-| Part | Description | Link (Example) |
-|----|----|----|
-| Power | USB-C PD Trigger Board (5V configurable) | [AliExpress](https://www.google.com/search?q=https://de.aliexpress.com/item/1005007010060543.html) |
-| LED Strip | WS2812B (ECO), 60 LEDs/m (Recommended: ~2–4m) | [AliExpress](https://www.google.com/search?q=https://de.aliexpress.com/item/1005007889104592.html) |
-| Buttons | 3× 60mm Arcade Buttons (Red, Green, Blue) | [AliExpress](https://www.google.com/search?q=https://de.aliexpress.com/item/1005008893549021.html) |
-| Menu Button | 1× 12mm Momentary Button | [AliExpress](https://www.google.com/search?q=https://de.aliexpress.com/item/1005010368828186.html) |
-| PSU | USB-C Charger (45W+ recommended) | Old Laptop Charger |
-| Misc | Wires, Hot Glue, Cable Ties, 3D Printed Case | Local Hardware Store |
+🚫 **NEVER power the LED strip via the ESP32 USB port**  
+WS2812B strips can draw **several amps**.  
+The ESP32 cannot supply this.
 
----
+🔥 **DO NOT connect the ESP32 to a PC via USB while the LEDs are externally powered**
 
-## 🔇 Version 1: Silent Edition (Specific Parts)
+**Correct workflow:**
+- Flashing firmware → **NO external LED power**
+- Playing the game → **NO PC USB connection**
 
-| Part | Description | Link |
-|----|----|----|
-| MCU | ESP32 Lolin S2 Mini | [AliExpress](https://www.google.com/search?q=https://de.aliexpress.com/item/1005006828096971.html) |
+Failure results in:
+- Burnt USB ports  
+- Dead ESP32  
+- Potential PC damage  
 
 ---
 
-## 🔊 Version 2: Sound Edition (Specific Parts)
+## 🛠 Hardware – ESP32-S3 Sound Edition (Recommended)
 
-| Part | Description | Link |
-|----|----|----|
-| MCU | ESP32-S3 DevKitC-1 (N16R8) | [Eckstein Shop](https://www.google.com/search?q=https://eckstein-shop.de/WaveShare-ESP32-S3-Microcontroller-24GHz-Wi-Fi-Development-Board%3Fws_oss_lieferland%3DCH%26srsltid%3DAfmBOooHC5LKcMW4IOEhddoCjtfklhrVoK-3E61sh-TB9_i2gWNpLEyr9v4) |
-| Amplifier | MAX98357A I2S Amplifier | [Eckstein Shop](https://eckstein-shop.de/AdafruitI2S3WClassDAmplifierBreakout-MAX98357A) |
-| Speaker | 4 Ohm 3W Speaker | [Eckstein Shop](https://eckstein-shop.de/AdafruitMonoEnclosedSpeaker-3W4Ohm) |
+### Core Components
 
----
+| Part | Description |
+|----|----|
+| MCU | **ESP32-S3 DevKitC-1 (N16R8 recommended)** |
+| LED Strip | WS2812B (ECO), 60 LEDs/m |
+| Audio Amp | MAX98357A I2S |
+| Speaker | 4 Ω / 3 W |
+| Buttons | 3× 60 mm arcade buttons |
+| Menu Button | 1× 12 mm momentary |
+| Power | USB-C PD trigger (fixed 5 V) |
+| PSU | USB-C power supply (≥45 W recommended) |
+| Misc | Wires, connectors, 3D printed case |
 
-## 🔌 Wiring & Pin Mapping
-
-### Common Wiring Rules
-- **Buttons:** One leg → GPIO, other leg → GND  
-- **LEDs:**  
-  - Data → GPIO  
-  - Power LEDs **directly** from PD Trigger (5V)  
-  - **NOT through the ESP32**
-
----
-
-### 📍 Mapping – Version 1 (Lolin S2 Mini)
-
-| Component | ESP32 Pin | Note |
-|----|----|----|
-| Button Blue | 3 | |
-| Button Red | 5 | |
-| Button Green | 7 | |
-| Button 12mm Silver | 9 | Menu / WiFi |
-| LED Data | 16 | |
+**Typical LED length:** 2–4 m  
+**Estimated total cost:** ~35–50 €
 
 ---
 
-### 📍 Mapping – Version 2 (ESP32-S3 Sound)
+## 🔌 Wiring – ESP32-S3 Sound Edition
 
-| Component | ESP32-S3 Pin | Note |
+### General Rules
+- **Buttons:** GPIO ↔ GND (internal pullups used)
+- **LED Power:** directly from 5 V PSU
+- **ESP32 GND and LED GND must be common**
+- **LED data line only goes to ESP32**
+
+### Pin Mapping (ESP32-S3)
+
+| Function | GPIO | Notes |
 |----|----|----|
 | Button Blue | 15 | |
 | Button Red | 16 | |
 | Button Green | 17 | |
-| Button 12mm Silver | 18 | Menu / WiFi |
-| LED Data | 7 | |
-| Audio BCLK | 4 | MAX98357A BCLK |
-| Audio LRC | 5 | MAX98357A LRC |
-| Audio DIN | 6 | MAX98357A DIN |
-| Audio Power | 5V / GND | MAX98357A Vin / GND |
+| Menu Button | 18 | Hold for WiFi |
+| LED Data | 7 | WS2812B |
+| I2S BCLK | 4 | MAX98357A |
+| I2S LRC | 5 | MAX98357A |
+| I2S DIN | 6 | MAX98357A |
+| Amp Power | 5 V / GND | External 5 V |
 
 ---
 
-## 💻 Software Setup (CRITICAL)
+## 💻 Software Setup – ESP32-S3 (Critical)
 
-This is where most people fail. Read carefully.
-
----
-
-### Step 1: Arduino IDE & Libraries
-1. Install **Arduino IDE 2.x**
-2. `Sketch → Include Library → Manage Libraries`
-3. Install **FastLED** (by Daniel Garcia)
+### Arduino IDE
+- Arduino IDE **2.x**
+- Library:
+  - **FastLED** (Daniel Garcia)
 
 ---
 
-### Step 2: Board Manager & Settings
+### ESP32 Board Package (IMPORTANT)
 
-#### 👉 Version 1 – Lolin S2 Mini
-- Board Manager: `esp32` by Espressif (latest OK)
-- Board: **LOLIN S2 MINI**
-- Tools Settings:
-  - USB CDC On Boot: **Enabled**
-  - Upload Mode: **Internal USB (OTG)**
+⚠️ **Audio requires a specific ESP32 core version**
 
----
+- Board package: `esp32` by Espressif
+- **Required version: 2.0.17**
+- ❌ Do **NOT** use 3.x
 
-#### 👉 Version 2 – ESP32-S3 Sound
+### Board Settings
 
-⚠️ **IMPORTANT:** Audio requires a specific core version.
-
-- Board Manager: `esp32`
-- **DOWNGRADE REQUIRED:**  
-  Install **Version 2.0.17**  
-  ❌ Do NOT use 3.0.x
 - Board: **ESP32S3 Dev Module**
-- Tools Settings:
-  - Flash Mode: DIO 80MHz
-  - Flash Size: 16MB (128Mb)
-  - Partition Scheme: 16M Flash (3MB APP / 9.9MB FATFS)
-  - PSRAM: **Disabled**
-  - USB CDC On Boot: **Disabled**
+- Flash Mode: DIO 80 MHz
+- Flash Size: 16 MB
+- Partition: 16M (3MB APP / 9.9MB FATFS)
+- PSRAM: **Disabled**
+- USB CDC on Boot: **Disabled**
 
 ---
 
-## 🚀 Uploading the Sketch
+## 🚀 Uploading Firmware (ESP32-S3)
 
-### Version 1 – S2 Mini
-You **must** force Download Mode:
-1. Hold **Button 0**
-2. Press **RST**
-3. Release **Button 0**
-4. Upload sketch
-
----
-
-### Version 2 – ESP32-S3
 - Use USB port labeled **UART / COM**
 - If upload fails:
   1. Hold **BOOT**
@@ -217,28 +155,59 @@ You **must** force Download Mode:
 
 ---
 
-## 🎮 First Start & Web Configuration
+## 🌐 First Start & Web Configuration
 
-1. Power up using **external power**
-2. Enter Menu:  
-   Hold **12mm silver button** for **4 seconds**  
-   → LED strip turns **BLUE**
-3. Connect via WiFi:
+1. Power system using **external 5 V**
+2. Hold **menu button** for **4 seconds**
+3. LED strip turns **blue**
+4. Connect WiFi:
    - SSID: `ESP-RGB-INVADERS`
    - Password: `12345678`
-4. Open browser:  
-   `http://192.168.4.1`
-5. Configure:
+5. Open browser:
+   - `http://192.168.4.1`
+6. Configure:
    - LED count
    - Brightness
-   - Sound config (Version 2 only)
-6. Click **Save** → ESP restarts
+   - Sound options
+7. Save → automatic reboot
 
-**Good luck & have fun.**
+---
 
+# 🧊 LEGACY SECTION – ESP32-S2 Silent Edition (Deprecated)
 
+⚠️ This section is provided **for reference only**.  
+No new features will be added.
 
-## 🚀 Have fun saving the galaxy!
+## Hardware
+- MCU: **LOLIN S2 Mini**
+- No audio hardware
 
+## Pin Mapping (S2)
 
+| Function | GPIO |
+|----|----|
+| Button Blue | 3 |
+| Button Red | 5 |
+| Button Green | 7 |
+| Menu Button | 9 |
+| LED Data | 16 |
 
+## Board Settings
+- Board: **LOLIN S2 MINI**
+- USB CDC On Boot: Enabled
+- Upload Mode: Internal USB (OTG)
+
+## Uploading (S2)
+1. Hold **Button 0**
+2. Press **RST**
+3. Release **Button 0**
+4. Upload sketch
+
+---
+
+## 📦 Files & 3D Models
+https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-2455425
+
+---
+
+## 🎮 Have fun saving the galaxy.
