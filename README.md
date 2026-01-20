@@ -6,7 +6,6 @@ https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-245
 ESP32 powered WS2812B 1D Space Invader inspired game
 https://youtube.com/shorts/Ps4TY1oXYPk?si=DmJbKW9S6Qn9KOkK
 
-https://github.com/user-attachments/assets/9a7cbed4-157b-47ac-b319-e42f20a55934
 
 # 👾 Ultimate 1D RGB Invaders 👾  
 ESP32-powered WS2812B 1D arcade shooter inspired by Space Invaders
@@ -14,7 +13,8 @@ ESP32-powered WS2812B 1D arcade shooter inspired by Space Invaders
 Turn a LED strip into a playable arcade game.  
 One pixel is your ship. The rest is hostile.
 
----
+---![titel_NEU](https://github.com/user-attachments/assets/b10edb1d-6fc2-4f3d-a430-d7cc7ac89697)
+
 
 ## ⚠️ Project Status & Version Recommendation (READ FIRST)
 
@@ -93,6 +93,8 @@ Failure results in:
 ---
 
 ## 🔌 Wiring – ESP32-S3 Sound Edition
+
+<img width="1755" height="1346" alt="kabelsalat_diagramm" src="https://github.com/user-attachments/assets/9ff30d59-d5aa-46c4-a003-bd2b7ccd35ea" />
 
 ### General Rules
 - **Buttons:** GPIO ↔ GND (internal pullups used)
@@ -205,9 +207,15 @@ No new features will be added.
 4. Upload sketch
 
 ---
+<img width="693" height="923" alt="play1" src="https://github.com/user-attachments/assets/4986d407-e34a-4fb8-8f8e-a8990c7910ff" />
 
 ## 📦 Files & 3D Models
 https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-2455425
+
+
+https://github.com/user-attachments/assets/893429f9-3624-477b-8929-b2d64a2e8e2e
+
+
 
 ---
 
