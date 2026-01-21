@@ -1,7 +1,7 @@
 # ⚠️⚠️⚠️ This is the old documentation, most likely its still valid but docu has changed to instructables.com ⚠️⚠️⚠️
 ➡️ ➡️ https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
 
-## This document is just for the chase that project gets lost on instructables in a few years.
+## This document is just for the case that project gets lost on instructables in a few years.
 ---
 ---
 ---
