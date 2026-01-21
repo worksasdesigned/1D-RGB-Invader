@@ -1,4 +1,4 @@
-# ⚠️⚠️⚠️ This is just the short version of dicumentation ⚠️⚠️⚠️  
+# ⚠️⚠️⚠️ This is just the short version of documentation ⚠️⚠️⚠️  
 # ⚠️⚠️⚠️ check for detailed docu&howto @ instructables.com ⚠️⚠️⚠️  
 
 ➡️ https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
