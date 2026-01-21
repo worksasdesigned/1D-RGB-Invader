@@ -1,10 +1,16 @@
+# ⚠️⚠️⚠️ This is just the short version of dicumentation ⚠️⚠️⚠️
+# ⚠️⚠️⚠️ check for detailed docu&howto @ instructables.com ⚠️⚠️⚠️
+
+➡️ ➡️ https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
+---
+---
+---
+---
+---
+
 # Find all files and 3D Model here:
-https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-2455425
-
-
-# 1D-RGB-Invader
-ESP32 powered WS2812B 1D Space Invader inspired game
-https://youtube.com/shorts/Ps4TY1oXYPk?si=DmJbKW9S6Qn9KOkK
+3D Model: https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-2455425
+Howto: https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
 
 
 # 👾 Ultimate 1D RGB Invaders 👾  
