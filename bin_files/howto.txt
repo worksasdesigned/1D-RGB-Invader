@@ -8,3 +8,4 @@ smaller updates will be provided as bin file. Source code will be updated when b
 Files:
 10_1.bin | First Version with OTA feature
 10_2.bin | Better balancing of final Boss (RGB overload)
+10_6 | endless mode, balancing adjustments for Boss1 & Boss2
