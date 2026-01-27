@@ -1,5 +1,5 @@
 # ⚠️ This is just the short version of documentation ⚠️    
-# check for detailed docu&howto @ instructables.com  
+check for detailed docu&howto @ instructables.com  
 
 ➡️ https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
 ---
@@ -31,16 +31,6 @@ This project exists in **two hardware variants**:
 - Web UI, OTA, highscores, bosses  
 - Actively developed and extended  
 - **This is the version you should build**
-
-### ⚠️ Legacy / Maintenance Only
-**Silent Edition – ESP32-S2**
-- No sound  
-- Fully functional  
-- **No new features planned**
-- Kept only for compatibility
-
-➡️ **All main documentation below refers to the ESP32-S3 Sound Edition.**  
-➡️ ESP32-S2 instructions are collected **at the very end** to avoid confusion.
 
 ---
 
@@ -76,7 +66,7 @@ Failure results in:
 
 ---
 
-## 🛠 Hardware – ESP32-S3 Sound Edition (Recommended)
+## 🛠 Hardware – ESP32-S3 Sound Edition 
 
 ### Core Components
 
@@ -92,7 +82,7 @@ Failure results in:
 | PSU | USB-C power supply (≥3A recommended) |
 | Misc | Wires, connectors, 3D printed case Hotglue as for every DIY project |
 
-**Typical LED length:** 2–4 m  
+**Typical LED length:** 4 m  
 **Estimated total cost:** ~35–50 €
 
 ---
@@ -181,37 +171,6 @@ These settings are compatible with cheap ESP32 S3 boards. Many AliExpress boards
 
 ---
 
-# 🧊 LEGACY SECTION – ESP32-S2 Silent Edition (Deprecated)
-
-⚠️ This section is provided **for reference only**.  
-No new features will be added.
-
-## Hardware
-- MCU: **LOLIN S2 Mini**
-- No audio hardware
-
-## Pin Mapping (S2)
-
-| Function | GPIO |
-|----|----|
-| Button Blue | 3 |
-| Button Red | 5 |
-| Button Green | 7 |
-| Menu Button | 9 |
-| LED Data | 16 |
-
-## Board Settings
-- Board: **LOLIN S2 MINI**
-- USB CDC On Boot: Enabled
-- Upload Mode: Internal USB (OTG)
-
-## Uploading (S2)
-1. Hold **Button 0**
-2. Press **RST**
-3. Release **Button 0**
-4. Upload sketch
-
----
 <img width="693" height="923" alt="play1" src="https://github.com/user-attachments/assets/4986d407-e34a-4fb8-8f8e-a8990c7910ff" />
 
 ## 📦 Files & 3D Models
@@ -220,32 +179,10 @@ https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-245
 
 https://github.com/user-attachments/assets/893429f9-3624-477b-8929-b2d64a2e8e2e
 
-
-## Updates for Version 11 (beta)
-- http://192.168.4.1/setscore?hs=50000&shots=20000&kills=5000 um Punkte zu übertragen, wenn man den ESP neu geflashed hat
-- MIDI support
-
-VS1053 Audio Out L --> an PAM8403 Input L
-VS1053 Audio Out R --> an PAM8403 Input R (optional ist eh nur mono)
-VS1053 GND --> an PAM8403 Input G (Ground)
-
-
-VS1053 Pin	ESP32-S3 Pin	Funktion
-MISO	13	SPI Data In
-MOSI	11	SPI Data Out
-SCK	12	SPI Clock
-XCS	10	Chip Select (Control)
-XDCS	9	Chip Select (Data)
-DREQ	8	Data Request (Interrupt)
-RST	3	Reset
-VCC/GND	5V / GND	Stromversorgung
-
-
-
 ---
-
+   
 ## 🎮 Have fun saving the galaxy.  
-
+   
 # Versions and Updates 
 # Major Version as source code, minor updates as *.bin file in the bin folder (use OTA Update of Firmware in Web Config)  
   
