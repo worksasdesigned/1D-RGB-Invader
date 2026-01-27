@@ -248,7 +248,11 @@ VCC/GND	5V / GND	Stromversorgung
 
 # Versions and Updates 
 # Major Version as source code, minor updates as *.bin file in the bin folder (use OTA Update of Firmware in Web Config)  
-|V.10.2| 16.02.26 |small balancing adjustments|
-|V.10.6| 26.01.26 |Boss 1, Boss2 adjusted. Endless mode now possible, afer RGB Overlord was beaten once (level 11-20)|
-|V.10.7| 27.01.26 | balancing of RGB Overlord. Bonus Stage now possible. Little easter Egg in "show level screen" (green bars)|  
+  
+| Version | Datum     | Beschreibung |
+|---------|-----------|--------------|
+| V.10.2  | 16.02.26  | small balancing adjustments |
+| V.10.6  | 26.01.26  | Boss 1, Boss 2 adjusted. Endless mode now possible after RGB Overlord was beaten once (level 11–20) |
+| V.10.7  | 27.01.26  | balancing of RGB Overlord. Bonus Stage now possible. Little easter egg in "show level screen" (green bars) |
+
 
