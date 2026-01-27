@@ -1,6 +1,6 @@
 Once you flashed the basic game (sound version) you can go to the setup page (press & hold reset button for 4 sec) - connect to wifi (PW: 12345678) --> open 192.168.4.1
 
-At the very bottom of the page you find a button "firmware update". 
+#At the very bottom of the page you find a button "firmware update". 
 Simply upload the bin file.
 
 smaller updates will be provided as bin file. Source code will be updated when bigger updates are ready.
@@ -8,4 +8,4 @@ smaller updates will be provided as bin file. Source code will be updated when b
 Files:
 10_1.bin | First Version with OTA feature
 10_2.bin | Better balancing of final Boss (RGB overload)
-10_6 | endless mode, balancing adjustments for Boss1 & Boss2
+10_6.bin | endless mode, balancing adjustments for Boss1 & Boss2
