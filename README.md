@@ -1,5 +1,5 @@
-# ⚠️⚠️⚠️ This is just the short version of documentation ⚠️⚠️⚠️  
-# ⚠️⚠️⚠️ check for detailed docu&howto @ instructables.com ⚠️⚠️⚠️  
+# ⚠️ This is just the short version of documentation ⚠️    
+# check for detailed docu&howto @ instructables.com  
 
 ➡️ https://www.instructables.com/-Ultimate-1D-RGB-Invaders-ESP32-Edition-Arcade-Act/
 ---
@@ -218,6 +218,26 @@ https://makerworld.com/de/models/2254346-1d-rgb-invader-retro-game#profileId-245
 
 
 https://github.com/user-attachments/assets/893429f9-3624-477b-8929-b2d64a2e8e2e
+
+
+## Updates for Version 11 (beta)
+- http://192.168.4.1/setscore?hs=50000&shots=20000&kills=5000 um Punkte zu übertragen, wenn man den ESP neu geflashed hat
+- MIDI support
+
+VS1053 Audio Out L --> an PAM8403 Input L
+VS1053 Audio Out R --> an PAM8403 Input R (optional ist eh nur mono)
+VS1053 GND --> an PAM8403 Input G (Ground)
+
+
+VS1053 Pin	ESP32-S3 Pin	Funktion
+MISO	13	SPI Data In
+MOSI	11	SPI Data Out
+SCK	12	SPI Clock
+XCS	10	Chip Select (Control)
+XDCS	9	Chip Select (Data)
+DREQ	8	Data Request (Interrupt)
+RST	3	Reset
+VCC/GND	5V / GND	Stromversorgung
 
 
 
