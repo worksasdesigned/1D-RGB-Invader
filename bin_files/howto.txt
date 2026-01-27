@@ -6,6 +6,7 @@ Simply upload the bin file.
 smaller updates will be provided as bin file. Source code will be updated when bigger updates are ready.
 
 Files:
-10_1.bin | First Version with OTA feature
-10_2.bin | Better balancing of final Boss (RGB overload)
-10_6.bin | endless mode, balancing adjustments for Boss1 & Boss2
+|10_1.bin | First Version with OTA feature
+|10_2.bin | Better balancing of final Boss (RGB overload)
+|10_6.bin | endless mode, balancing adjustments for Boss1 & Boss2
+|10_7.bin | small adjustments (point system changed) , easter egg in loading screen (show level screen) possible --> Bonus stage
