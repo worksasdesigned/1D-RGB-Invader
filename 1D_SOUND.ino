@@ -1,5 +1,5 @@
 // ==========================================================================
-// PROJECT: ULTIMATE RGB INVADERS - V10.7 ( BONUS EDITION)
+// PROJECT: ULTIMATE RGB INVADERS - V10.9.2 (ALL BOSS HITBOX FIX)
 // HARDWARE: ESP32-S3 (N16), MAX98357A, WS2812B
 // CORE VERSION: 2.0.17 (Required!)
 // ==========================================================================
@@ -9,7 +9,7 @@
 #include <Preferences.h>
 #include <driver/i2s.h>
 #include <vector>
-#include <Update.h> // Fuer Web-OTA
+#include <Update.h>
 
 // --- LED CONFIGURATION ---
 #define FASTLED_ESP32_S3_PIN 7 
@@ -33,8 +33,8 @@
 #define PIN_BTN_GREEN   17
 #define PIN_BTN_WHITE   18 
 
-#define CONFIG_VERSION  35 // Version bumped
-#define FRAME_DELAY     16    // 16ms = approx. 60 FPS
+#define CONFIG_VERSION  39 // Version 10.9.2
+#define FRAME_DELAY     16 // ~60 FPS
 #define INPUT_BUFFER_MS 60 
 #define SAMPLE_RATE     44100
 
@@ -45,20 +45,29 @@ typedef std::vector<ToneCmd> Melody;
 
 enum SoundEvent { 
   EVT_NONE=0, EVT_START, EVT_WIN, EVT_LOSE, EVT_MISTAKE,      
-  EVT_HIT_SUCCESS, EVT_SHOT_BLUE, EVT_SHOT_RED, EVT_SHOT_GREEN, EVT_SHOT_WHITE, EVT_FINAL_WIN,
+  EVT_HIT_SUCCESS, 
+  EVT_SHOT_BLUE, EVT_SHOT_RED, EVT_SHOT_GREEN, EVT_SHOT_WHITE,
+  EVT_SHOT_YELLOW, EVT_SHOT_MAGENTA, EVT_SHOT_CYAN, 
+  EVT_FINAL_WIN,
   EVT_BONUS_START, EVT_BONUS_WAVE, EVT_BONUS_SPEEDUP
 };
+
 enum GameState { 
   STATE_MENU, STATE_INTRO, STATE_PLAYING, STATE_BOSS_PLAYING, 
   STATE_LEVEL_COMPLETED, STATE_GAME_FINISHED, STATE_BASE_DESTROYED, STATE_GAMEOVER,
-  STATE_BONUS_INTRO, STATE_BONUS_PLAYING 
+  STATE_BONUS_INTRO, STATE_BONUS_PLAYING, // Beatsaber
+  STATE_BONUS_SIMON // Simon Says
 };
+
 enum Boss2State { B2_MOVE, B2_CHARGE, B2_SHOOT };
 enum Boss3State { B3_MOVE, B3_PHASE_CHANGE, B3_BURST, B3_WAIT };
 
+// Simon Says States
+enum SimonState { S_MOVE, S_PREPARE, S_SHOW, S_INPUT, S_SUCCESS, S_FAIL };
+
 struct LevelConfig { int speed; int length; int bossType; };
 struct BossConfig { int moveSpeed; int shotSpeed; int hpPerLed; int shotFreq; int burstCount; int m1; int m2; int m3; };
-struct Enemy { int color; float pos; bool flash; }; // Added flash flag for bonus
+struct Enemy { int color; float pos; bool flash; };
 struct BossSegment { int color; int hp; int maxHp; bool active; int originalIndex; };
 struct Shot { float position; int color; }; 
 struct BossProjectile { float pos; int color; };
@@ -89,60 +98,64 @@ const String DEF_SND_SHOT_RED    = "784,30;1047,30;1319,30";
 const String DEF_SND_SHOT_GREEN  = "523,30;554,30;523,30";
 const String DEF_SND_SHOT_WHITE  = "1047,20;1319,20;1568,20;2093,4";
 const String DEF_SND_HIT         = "2093,30";
-// NEW: Beep Beep
 const String DEF_SND_SPEEDUP     = "1500,80;0,50;1500,80"; 
+
+const String DEF_SND_SHOT_Y      = "1500,40;1800,40";        
+const String DEF_SND_SHOT_M      = "800,40;2000,40";        
+const String DEF_SND_SHOT_C      = "1200,40;1000,40";       
 
 String cfg_snd_start, cfg_snd_win, cfg_snd_lose, cfg_snd_mistake;
 String cfg_snd_shot_b, cfg_snd_shot_r, cfg_snd_shot_g, cfg_snd_shot_w, cfg_snd_hit;
 
 // Color Configuration
-String hex_c1 = "#0000FF"; // Type 1 (Blue)
-String hex_c2 = "#FF0000"; // Type 2 (Red)
-String hex_c3 = "#00FF00"; // Type 3 (Green)
-String hex_c4 = "#FFFF00"; // Boss Mix 1 (Yellow)
-String hex_c5 = "#FF00FF"; // Boss Mix 2 (Magenta)
-String hex_c6 = "#00FFFF"; // Boss Mix 3 (Cyan)
-String hex_cw = "#FFFFFF"; // White Shot
-String hex_cb = "#222222"; // Boss Generic / Charging
+String hex_c1 = "#0000FF"; // Blue
+String hex_c2 = "#FF0000"; // Red
+String hex_c3 = "#00FF00"; // Green
+String hex_c4 = "#FFFF00"; // Yellow
+String hex_c5 = "#FF00FF"; // Magenta
+String hex_c6 = "#00FFFF"; // Cyan
+String hex_cw = "#FFFFFF"; // White
+String hex_cb = "#222222"; // Dark
 
 CRGB col_c1, col_c2, col_c3, col_c4, col_c5, col_c6, col_cw, col_cb;
 Melody melStart, melWin, melLose, melMistake, melShotBlue, melShotRed, melShotGreen, melShotWhite, melHit, melFinalWin, melSpeedUp;
+Melody melShotY, melShotM, melShotC;
 
 // Config
-int config_num_leds = 100; 
+int config_num_leds = 100;
 int config_brightness_pct = 50;
 int config_start_level = 1;
 bool config_sacrifice_led = true; 
 int config_homebase_size = 3;       
-int config_shot_speed_pct = 100; 
+int config_shot_speed_pct = 100;
 int ledStartOffset = 1;
 // AUDIO CONFIG
 bool config_sound_on = true;
 int config_volume_pct = 50;
 bool config_endless_mode = false;
-
 String currentProfilePrefix = "def_"; 
 String config_ssid = "";
 String config_pass = "";
-bool config_static_ip = false; String config_ip = ""; String config_gateway = ""; String config_subnet = "";
+bool config_static_ip = false; String config_ip = "";
+String config_gateway = ""; String config_subnet = "";
 String config_dns = "";
 bool wifiMode = false; 
 
 // Game State
-LevelConfig levels[11]; 
+LevelConfig levels[11];
 BossConfig boss1Cfg; BossConfig boss2Cfg; BossConfig boss3Cfg;
 GameState currentState = STATE_MENU;
 
 unsigned long lastLoopTime = 0; 
-unsigned long stateTimer = 0; 
+unsigned long stateTimer = 0;
 unsigned long lastShotMove = 0;
 unsigned long lastEnemyMove = 0;
 unsigned long lastFireTime = 0;
-unsigned long bossActionTimer = 0; 
+unsigned long bossActionTimer = 0;
 bool buttonsReleased = true;
 unsigned long btnWhitePressTime = 0;
 bool btnWhiteHeld = false;
-unsigned long comboTimer = 0;    
+unsigned long comboTimer = 0;
 bool isWaitingForCombo = false; 
 
 std::vector<Enemy> enemies;
@@ -155,28 +168,43 @@ int currentBossType = 0;
 
 // Boss Vars
 Boss2State boss2State = B2_MOVE;
-int boss2Section = 0; int boss2ShotsFired = 0; int boss2LockedColor = 1; int markerPos[3]; int boss2TargetShots = 10; 
-int boss1WrongHits = 0; bool boss1RageMode = false; int boss1RageShots = 0;
+int boss2Section = 0; int boss2ShotsFired = 0;
+int boss2LockedColor = 1; int markerPos[3]; int boss2TargetShots = 10; 
+int boss1WrongHits = 0; bool boss1RageMode = false;
+int boss1RageShots = 0;
 Boss3State boss3State = B3_MOVE;
-int boss3PhaseIndex = 0; int boss3BurstCounter = 0; int boss3Markers[2]; 
-
+int boss3PhaseIndex = 0; int boss3BurstCounter = 0; int boss3Markers[2];
 int currentScore = 0;
 int highScore = 0; int lastGames[3] = {0, 0, 0};
-unsigned long levelStartTime = 0; int levelMaxPossibleScore = 0;
+unsigned long levelStartTime = 0;
+int levelMaxPossibleScore = 0;
 int levelAchievedScore = 0;     
 
-// --- BONUS LEVEL VARIABLES ---
-bool bonusPlayedThisLevel = false; 
+// --- BONUS 1 (BEATSABER) VARIABLES ---
+bool bonusPlayedThisLevel = false;
+bool autoBonusTrigger = false; // Triggered by Perfect Score
 int bonusEnemiesSpawned = 0;
 int bonusLives = 10;
 int bonusWaveCount = 0;
 unsigned long bonusPauseTimer = 0;
 bool bonusInPause = false;
-float bonusSpeedMultiplier = 1.0; // Speed Multiplier
-unsigned long bonusFlashTimer = 0; // For flashing enemies on speedup
+float bonusSpeedMultiplier = 1.0; 
+unsigned long bonusFlashTimer = 0;
 std::vector<Enemy> bonusEnemies; 
 std::vector<Shot> bonusShots;    
 int bonusReturnLevel = 1;
+
+// --- BONUS 2 (SIMON SAYS) VARIABLES ---
+SimonState simonState = S_MOVE;
+int simonLives = 3;
+int simonStage = 0;          
+int simonStopIndex = 0;      
+float simonBossPos = 0.0;
+std::vector<int> simonFullSequence; // Der KOMPLETTE Code
+int simonPlaybackIdx = 0;    
+int simonInputIdx = 0;       
+unsigned long simonTimer = 0;
+int simonTargetPos = 0;      
 
 // --------------------------------------------------------------------------
 // 3. HELPER FUNCTIONS
@@ -229,6 +257,9 @@ void playShotSound(int color) {
         case 1: playSound(EVT_SHOT_BLUE); break;
         case 2: playSound(EVT_SHOT_RED); break;
         case 3: playSound(EVT_SHOT_GREEN); break;
+        case 4: playSound(EVT_SHOT_YELLOW); break; 
+        case 5: playSound(EVT_SHOT_MAGENTA); break; 
+        case 6: playSound(EVT_SHOT_CYAN); break; 
         case 7: playSound(EVT_SHOT_WHITE); break;
         default: playSound(EVT_SHOT_BLUE); break;
     }
@@ -295,6 +326,9 @@ void audioTask(void *parameter) {
                     case EVT_SHOT_RED:   currentMelody = &melShotRed; break;
                     case EVT_SHOT_GREEN: currentMelody = &melShotGreen; break;
                     case EVT_SHOT_WHITE: currentMelody = &melShotWhite; break;
+                    case EVT_SHOT_YELLOW: currentMelody = &melShotY; break;
+                    case EVT_SHOT_MAGENTA:currentMelody = &melShotM; break;
+                    case EVT_SHOT_CYAN:   currentMelody = &melShotC; break;
                     case EVT_MISTAKE:    currentMelody = &melMistake; break;
                     case EVT_HIT_SUCCESS:currentMelody = &melHit; break;
                     case EVT_WIN:        currentMelody = &melWin; break;
@@ -331,13 +365,13 @@ void audioTask(void *parameter) {
 // --------------------------------------------------------------------------
 CRGB getColor(int colorCode) {
   switch (colorCode) {
-    case 1: return col_c1;
-    case 2: return col_c2; 
-    case 3: return col_c3;
-    case 4: return col_c4; 
-    case 5: return col_c5; 
-    case 6: return col_c6;
-    case 7: return col_cw;    
+    case 1: return col_c1; // Blue
+    case 2: return col_c2; // Red
+    case 3: return col_c3; // Green
+    case 4: return col_c4; // Yellow
+    case 5: return col_c5; // Magenta
+    case 6: return col_c6; // Cyan
+    case 7: return col_cw; // White  
     default: return CRGB::Black;
   }
 }
@@ -398,10 +432,8 @@ void triggerBaseDestruction() {
 void calculateLevelScore() {
   unsigned long duration = millis() - levelStartTime;
   int entityCount = 0;
-  
   int calcLevel = currentLevel;
   if(currentLevel > 10) calcLevel = ((currentLevel - 1) % 10) + 1;
-  
   if (currentLevel <= 10 && levels[currentLevel].bossType > 0) {
     if (levels[currentLevel].bossType == 1) entityCount = 9 * boss1Cfg.hpPerLed;
     else if (levels[currentLevel].bossType == 2) entityCount = 9 * boss2Cfg.hpPerLed;
@@ -410,12 +442,18 @@ void calculateLevelScore() {
     entityCount = levels[calcLevel].length;
   }
   
-  int levelMultiplier = currentLevel; 
+  int levelMultiplier = currentLevel;
   int basePoints = entityCount * 100 * levelMultiplier;
   
-  // SCORING: 75% Time, 25% Kills
   unsigned long targetTime = 0;
-  if (currentLevel <= 10 && levels[currentLevel].bossType == 2) targetTime = 38000; 
+  
+  // BALANCING BOSS 1 (Tank)
+  if (currentLevel <= 10 && levels[currentLevel].bossType == 1) {
+      targetTime = 25000; 
+  }
+  else if (currentLevel <= 10 && levels[currentLevel].bossType == 2) {
+      targetTime = 38000;
+  }
   else {
       unsigned long travelTime = config_num_leds * 15;
       unsigned long processingTime = entityCount * 300; 
@@ -423,10 +461,10 @@ void calculateLevelScore() {
   }
   
   int timeBonus = 0;
-  int maxTimeBonus = basePoints * 3; // 75%
+  int maxTimeBonus = basePoints * 3;
   
   if (currentLevel <= 10 && levels[currentLevel].bossType == 3) {
-      timeBonus = maxTimeBonus; 
+      timeBonus = maxTimeBonus;
   } else {
       if (duration <= targetTime) timeBonus = maxTimeBonus;
       else {
@@ -447,9 +485,16 @@ void checkWinCondition() {
   if (won) {
     calculateLevelScore();
     
+    // CHECK PERFECT SCORE (Automatic Bonus Trigger)
+    if (levelAchievedScore >= levelMaxPossibleScore) {
+        autoBonusTrigger = true;
+    } else {
+        autoBonusTrigger = false;
+    }
+
     if (currentLevel <= 10 && levels[currentLevel].bossType == 3) {
         stat_boss3Kills++;
-        saveHighscores(); 
+        saveHighscores();
     }
 
     if (!config_endless_mode && currentLevel >= 10) {
@@ -487,8 +532,7 @@ void startLevelIntro(int level) {
   if(startPos < 0) startPos = 0;
   int cursor = startPos;
   for(int i=0; i<displayLevel; i++) {
-    for(int k=0; k<6; k++) { if(cursor < config_num_leds) leds[cursor + ledStartOffset] = barColor;
-    cursor++; }
+    for(int k=0; k<6; k++) { if(cursor < config_num_leds) leds[cursor + ledStartOffset] = barColor; cursor++; }
     cursor += 4; 
   }
   if(config_sacrifice_led) leds[0] = CRGB(20, 0, 0); 
@@ -497,7 +541,7 @@ void startLevelIntro(int level) {
 
 void drawLevelIntro(int level) {
   FastLED.clear();
-  for(int i=0; i<config_num_leds; i++) leds[i+ledStartOffset] = CRGB(5,5,5); 
+  for(int i=0; i<config_num_leds; i++) leds[i+ledStartOffset] = CRGB(5,5,5);
   CRGB barColor = (level <= 10 && levels[level].bossType > 0) ? col_c2 : col_c3;
   int center = config_num_leds / 2;
   int displayLevel = (level > 10) ? 10 : level;
@@ -505,17 +549,240 @@ void drawLevelIntro(int level) {
   int startPos = center - (totalWidth/2); if(startPos < 0) startPos = 0;
   int cursor = startPos;
   for(int i=0; i<displayLevel; i++) {
-    for(int k=0; k<6; k++) { if(cursor < config_num_leds) leds[cursor + ledStartOffset] = barColor;
-    cursor++; }
+    for(int k=0; k<6; k++) { if(cursor < config_num_leds) leds[cursor + ledStartOffset] = barColor; cursor++; }
     cursor += 4; 
   }
   if(config_sacrifice_led) leds[0] = CRGB(20, 0, 0);
   FastLED.show();
 }
 
+// --------------------------------------------------------------------------
+// SIMON SAYS ENGINE (CUMULATIVE VERSION)
+// --------------------------------------------------------------------------
+int getSimonStageLength(int stage) {
+    int lens[] = {4, 5, 6, 8, 9, 11, 13, 15, 17};
+    if (stage >= 0 && stage <= 8) return lens[stage];
+    return 17;
+}
+
+void generateSimonSequence() {
+    simonFullSequence.clear();
+    int totalMaxLen = 17; 
+    
+    for(int i=0; i<totalMaxLen; i++) {
+        int c = 1;
+        if (i < 8) {
+            c = random(1, 4); 
+        } else {
+            c = random(1, 7);
+        }
+        simonFullSequence.push_back(c);
+    }
+}
+
+void startSimonBonus() {
+    simonLives = 3;
+    simonStage = 0;
+    simonStopIndex = 0;
+    simonBossPos = (float)config_num_leds - 1.0;
+    generateSimonSequence(); 
+    currentState = STATE_BONUS_SIMON;
+    simonState = S_MOVE;
+    simonTargetPos = config_num_leds - ((simonStopIndex + 1) * (config_num_leds / 12));
+    playSound(EVT_BONUS_WAVE);
+}
+
+void updateSimonBonus() {
+    unsigned long now = millis();
+    int bossLen = 9 - simonStage; 
+    int currentSeqLen = getSimonStageLength(simonStage);
+
+    if (simonLives <= 0 || (simonState == S_MOVE && simonBossPos <= config_homebase_size)) {
+        playSound(EVT_LOSE);
+        startLevelIntro(bonusReturnLevel);
+        return;
+    }
+
+    switch(simonState) {
+        case S_MOVE: {
+            float spd = 20.0 + (simonStage * 3.0);
+            simonBossPos -= (spd / 60.0);
+            if (simonBossPos <= simonTargetPos) {
+                simonBossPos = (float)simonTargetPos; 
+                simonState = S_PREPARE;
+                simonTimer = now;
+                playSound(EVT_SHOT_WHITE); 
+            }
+            break;
+        }
+        case S_PREPARE: {
+            if (now - simonTimer > 1000) {
+                simonState = S_SHOW;
+                simonPlaybackIdx = 0;
+                simonTimer = now;
+            }
+            break;
+        }
+        case S_SHOW: {
+            int delayMs = 600 - (simonStage * 40); 
+            if (simonStage >= 5) delayMs = 400; 
+            if (simonStage >= 7) delayMs = 300;
+
+            if (now - simonTimer > delayMs) {
+                if (simonPlaybackIdx < currentSeqLen) {
+                    playShotSound(simonFullSequence[simonPlaybackIdx]);
+                    simonPlaybackIdx++;
+                    simonTimer = now;
+                } else {
+                    simonState = S_INPUT;
+                    simonInputIdx = 0;
+                    buttonsReleased = true; 
+                    isWaitingForCombo = false;
+                }
+            }
+            break;
+        }
+        case S_INPUT: {
+            bool b = (digitalRead(PIN_BTN_BLUE) == LOW);
+            bool r = (digitalRead(PIN_BTN_RED) == LOW); 
+            bool g = (digitalRead(PIN_BTN_GREEN) == LOW);
+            bool pressed = (b || r || g);
+
+            if (!pressed) { buttonsReleased = true; isWaitingForCombo = false; }
+            
+            if (pressed && buttonsReleased && !isWaitingForCombo && (now - lastFireTime > FIRE_COOLDOWN)) {
+                 isWaitingForCombo = true;
+                 comboTimer = now;
+            }
+            
+            if (isWaitingForCombo && (now - comboTimer >= INPUT_BUFFER_MS)) {
+                int c = 0;
+                b = (digitalRead(PIN_BTN_BLUE) == LOW); 
+                r = (digitalRead(PIN_BTN_RED) == LOW); 
+                g = (digitalRead(PIN_BTN_GREEN) == LOW);
+                
+                if (r && g && b) c = 7; 
+                else if (r && g) c = 4; // Yellow
+                else if (r && b) c = 5; // Magenta
+                else if (g && b) c = 6; // Cyan
+                else if (b) c = 1; 
+                else if (r) c = 2; 
+                else if (g) c = 3;
+
+                if (c > 0) {
+                    playShotSound(c);
+                    if (c == simonFullSequence[simonInputIdx]) {
+                        simonInputIdx++;
+                        if (simonInputIdx >= currentSeqLen) {
+                            simonState = S_SUCCESS;
+                            simonTimer = now;
+                            playSound(EVT_HIT_SUCCESS);
+                            currentScore += (250 * (simonStage + 1));
+                        }
+                    } else {
+                        simonState = S_FAIL;
+                        simonTimer = now;
+                        playSound(EVT_MISTAKE);
+                        simonLives--;
+                    }
+                    lastFireTime = now;
+                }
+                buttonsReleased = false; 
+                isWaitingForCombo = false;
+            }
+            break;
+        }
+        case S_SUCCESS: {
+            if (now - simonTimer > 1000) {
+                 simonStage++;
+                 if (simonStage >= 9) {
+                     playSound(EVT_FINAL_WIN);
+                     startLevelIntro(bonusReturnLevel);
+                     return;
+                 }
+                 simonStopIndex++;
+                 simonTargetPos = config_num_leds - ((simonStopIndex + 1) * (config_num_leds / 12));
+                 simonState = S_MOVE;
+            }
+            break;
+        }
+        case S_FAIL: {
+            if (now - simonTimer > 1000) {
+                simonStopIndex++;
+                simonTargetPos = config_num_leds - ((simonStopIndex + 1) * (config_num_leds / 12));
+                simonState = S_MOVE;
+            }
+            break;
+        }
+    }
+
+    FastLED.clear();
+    
+    // Draw Marker
+    if (simonState == S_MOVE) {
+        if(simonTargetPos >= 0 && simonTargetPos < config_num_leds)
+            leds[simonTargetPos + ledStartOffset] = CRGB::Red;
+    }
+
+    // Draw Boss
+    for(int i=0; i < bossLen; i++) {
+        int pixelPos = (int)simonBossPos + i;
+        if (pixelPos >= config_num_leds) continue;
+        
+        CRGB c = CRGB::Black;
+        if (simonState == S_MOVE || simonState == S_PREPARE) {
+             c = CHSV((i*20) + (millis()/10), 255, 255);
+        } else if (simonState == S_SHOW) {
+             if (i == 0) { 
+                 int delayMs = 600 - (simonStage * 40); if(simonStage>=5) delayMs=400; if(simonStage>=7) delayMs=300;
+                 long elapsedShow = now - simonTimer;
+                 if (simonPlaybackIdx < currentSeqLen && elapsedShow < (delayMs - 100)) {
+                     c = getColor(simonFullSequence[simonPlaybackIdx]);
+                 } else {
+                     c = CRGB::White; 
+                 }
+             } else {
+                 c = CRGB::White;
+             }
+        } else if (simonState == S_INPUT) {
+             c = CRGB::White;
+        } else if (simonState == S_SUCCESS) {
+             if (i==0) c = ((millis()/50)%2==0) ? CRGB::Red : CRGB::Yellow;
+             else c = CRGB::Green;
+        } else if (simonState == S_FAIL) {
+             c = CRGB::Red;
+        }
+
+        if(pixelPos >= 0) leds[pixelPos + ledStartOffset] = c;
+    }
+
+    for(int i=0; i<simonLives; i++) {
+        if(i+ledStartOffset < config_num_leds) leds[i+ledStartOffset] = CRGB::Blue;
+    }
+
+    if(config_sacrifice_led) leds[0] = CRGB(20,0,0); 
+    FastLED.show();
+}
+
+// --------------------------------------------------------------------------
+// ORIGINAL BONUS GAME & LEVEL LOGIC
+// --------------------------------------------------------------------------
+void startBonusGame() {
+    bonusEnemiesSpawned = 0;
+    bonusLives = 10;
+    bonusWaveCount = 0;
+    bonusInPause = false;
+    bonusSpeedMultiplier = 1.0;
+    bonusFlashTimer = 0;
+    bonusEnemies.clear();
+    bonusShots.clear();
+    lastFireTime = millis();
+    currentState = STATE_BONUS_PLAYING;
+    playSound(EVT_BONUS_WAVE);
+}
+
 void updateLevelIntro() {
-  // BONUS LEVEL TRIGGER
-  if (!bonusPlayedThisLevel) {
+  if (!bonusPlayedThisLevel && (currentLevel <= 10 && levels[currentLevel].bossType > 0)) {
       if (digitalRead(PIN_BTN_RED) == LOW && digitalRead(PIN_BTN_BLUE) == LOW && digitalRead(PIN_BTN_GREEN) == LOW) {
            bonusPlayedThisLevel = true;
            bonusReturnLevel = currentLevel;
@@ -539,11 +806,10 @@ void updateLevelIntro() {
     levelStartTime = millis(); 
     
     bool isBossLevel = (currentLevel <= 10 && levels[currentLevel].bossType > 0);
-    
     if (isBossLevel) {
       currentBossType = levels[currentLevel].bossType;
       bossSegments.clear(); enemies.clear(); shots.clear(); bossProjectiles.clear();
-      enemyFrontIndex = (float)config_num_leds - 1.0; 
+      enemyFrontIndex = (float)config_num_leds - 1.0;
       if (currentBossType == 1) {
         for(int i=0; i<3; i++) bossSegments.push_back({3, boss1Cfg.hpPerLed, boss1Cfg.hpPerLed, true, 0});
         for(int i=0; i<3; i++) bossSegments.push_back({1, boss1Cfg.hpPerLed, boss1Cfg.hpPerLed, true, 0});
@@ -570,15 +836,13 @@ void updateLevelIntro() {
       }
       currentState = STATE_BOSS_PLAYING;
     } else {
-      currentBossType = 0; 
+      currentBossType = 0;
       enemies.clear(); shots.clear(); bossProjectiles.clear();
       
       int effectiveLevel = currentLevel;
       if (currentLevel > 10) effectiveLevel = ((currentLevel - 1) % 10) + 1;
-      
       int count = levels[effectiveLevel].length;
       if (count <= 0) count = 10;
-      
       for (int i = 0; i < count; i++) {
           int color = random(1, 4);
           if (currentLevel >= 11) color = random(1, 7); 
@@ -588,23 +852,6 @@ void updateLevelIntro() {
       currentState = STATE_PLAYING;
     }
   }
-}
-
-// --------------------------------------------------------------------------
-// BONUS LEVEL ENGINE
-// --------------------------------------------------------------------------
-void startBonusGame() {
-    bonusEnemiesSpawned = 0;
-    bonusLives = 10;
-    bonusWaveCount = 0;
-    bonusInPause = false;
-    bonusSpeedMultiplier = 1.0;
-    bonusFlashTimer = 0;
-    bonusEnemies.clear();
-    bonusShots.clear();
-    lastFireTime = millis();
-    currentState = STATE_BONUS_PLAYING;
-    playSound(EVT_BONUS_WAVE);
 }
 
 void updateBonusIntro() {
@@ -619,20 +866,21 @@ void updateBonusIntro() {
         if(config_sacrifice_led) leds[0] = CRGB(20,0,0);
         FastLED.show();
     } else {
-        startBonusGame();
+        if (random(0, 100) < 50) {
+            startSimonBonus();
+        } else {
+            startBonusGame();
+        }
     }
 }
 
 void updateBonusGame() {
     unsigned long now = millis();
-    
-    // 1. INPUT
     bool r = (digitalRead(PIN_BTN_RED) == LOW);
     bool g = (digitalRead(PIN_BTN_GREEN) == LOW);
     bool pressed = (r || g);
     
     if (!pressed) buttonsReleased = true;
-    
     if (pressed && buttonsReleased && (now - lastFireTime > FIRE_COOLDOWN)) {
         int c = 0;
         if (r) c = 2; // Red
@@ -646,20 +894,17 @@ void updateBonusGame() {
         }
     }
     
-    // 2. SPAWNING & SPEEDUP
     if (bonusEnemiesSpawned < 200) {
         if (bonusInPause) {
             if (now - bonusPauseTimer > 2000) {
                 bonusInPause = false;
                 bonusWaveCount = 0; 
-                // --- SPEED INCREASE ---
-                bonusSpeedMultiplier += 0.2; // +20%
-                bonusFlashTimer = now; // Trigger flash
+                bonusSpeedMultiplier += 0.2;
+                bonusFlashTimer = now;
                 playSound(EVT_BONUS_SPEEDUP);
             }
         } else {
             static unsigned long lastBonusSpawn = 0;
-            // Spawn Rate adjust to speed (faster enemies = faster spawn to keep gaps)
             int spawnRate = (int)(600.0 / bonusSpeedMultiplier);
             if (now - lastBonusSpawn > spawnRate) { 
                 lastBonusSpawn = now;
@@ -667,7 +912,6 @@ void updateBonusGame() {
                 bonusEnemies.push_back({color, (float)config_num_leds - 1.0, false});
                 bonusEnemiesSpawned++;
                 bonusWaveCount++;
-                
                 if (bonusWaveCount >= 25) {
                     bonusInPause = true;
                     bonusPauseTimer = now;
@@ -676,9 +920,7 @@ void updateBonusGame() {
         }
     }
     
-    // 3. MOVEMENT & COLLISION
-    // Shots
-    float shotSpeed = (float)config_shot_speed_pct / 60.0 * 0.8; 
+    float shotSpeed = (float)config_shot_speed_pct / 60.0 * 0.8;
     for (int i = bonusShots.size() - 1; i >= 0; i--) {
         bonusShots[i].position += shotSpeed;
         bool remove = false;
@@ -687,15 +929,13 @@ void updateBonusGame() {
              for(int e=0; e<bonusEnemies.size(); e++) {
                  if (abs(bonusShots[i].position - bonusEnemies[e].pos) < 1.0) {
                      if (bonusShots[i].color == bonusEnemies[e].color) {
-                         // Hit!
                          bonusEnemies.erase(bonusEnemies.begin() + e);
                          currentScore += 500; 
                          flashPixel((int)bonusShots[i].position);
                          remove = true;
-                         break; 
+                         break;
                      } else {
-                         // Wrong Color -> Penalty
-                         remove = true; 
+                         remove = true;
                          bonusLives--;
                          playSound(EVT_MISTAKE);
                          break;
@@ -705,7 +945,6 @@ void updateBonusGame() {
         }
         
         if (!remove && bonusShots[i].position >= config_num_leds) {
-            // Shot missed everything -> Penalty
             remove = true;
             bonusLives--;
             playSound(EVT_MISTAKE);
@@ -714,8 +953,6 @@ void updateBonusGame() {
         if (remove) bonusShots.erase(bonusShots.begin() + i);
     }
     
-    // Enemy Move
-    // Speed Level 8 approx 25.0 * Multiplier
     float enemySpeed = (25.0 / 60.0) * bonusSpeedMultiplier;
     for (int i = bonusEnemies.size() - 1; i >= 0; i--) {
         bonusEnemies[i].pos -= enemySpeed;
@@ -726,7 +963,6 @@ void updateBonusGame() {
         }
     }
     
-    // 4. WIN / LOSE CHECK
     if (bonusLives <= 0) {
         playSound(EVT_LOSE);
         startLevelIntro(bonusReturnLevel); 
@@ -734,24 +970,21 @@ void updateBonusGame() {
     }
     
     if (bonusEnemiesSpawned >= 200 && bonusEnemies.empty()) {
-        playSound(EVT_FINAL_WIN); 
+        playSound(EVT_FINAL_WIN);
         startLevelIntro(bonusReturnLevel); 
         return;
     }
 
-    // 5. DRAW
     FastLED.clear();
     bool doFlash = (now - bonusFlashTimer < 200) && (bonusFlashTimer > 0);
-    
     for(auto &e : bonusEnemies) {
         CRGB c = getColor(e.color);
-        if (doFlash) c = CRGB::White; // Flash all enemies on speedup
+        if (doFlash) c = CRGB::White; 
         drawCrispPixel(e.pos, c);
     }
     for(auto &s : bonusShots) {
         drawCrispPixel(s.position, getColor(s.color));
     }
-    // Lives as Yellow Base
     for(int i=0; i<bonusLives; i++) {
         if(i+ledStartOffset < config_num_leds) leds[i+ledStartOffset] = CRGB::Yellow;
     }
@@ -759,9 +992,6 @@ void updateBonusGame() {
     FastLED.show();
 }
 
-// --------------------------------------------------------------------------
-// RESTORED FUNCTIONS
-// --------------------------------------------------------------------------
 void updateLevelCompletedAnim() {
   unsigned long elapsed = millis() - stateTimer;
   if (elapsed < 1000) {
@@ -776,7 +1006,16 @@ void updateLevelCompletedAnim() {
     for(int i=0; i<fillLeds; i++) leds[i+ledStartOffset] = CRGB(80, 60, 0); 
     for(int i=fillLeds; i<config_num_leds; i++) leds[i+ledStartOffset] = CRGB(20, 0, 0);
   } else {
-    startLevelIntro(currentLevel + 1);
+    if (autoBonusTrigger) {
+        autoBonusTrigger = false;
+        bonusPlayedThisLevel = true;
+        bonusReturnLevel = currentLevel + 1; 
+        currentState = STATE_BONUS_INTRO;
+        stateTimer = millis();
+        playSound(EVT_BONUS_START);
+    } else {
+        startLevelIntro(currentLevel + 1);
+    }
   }
   FastLED.show();
 }
@@ -802,7 +1041,6 @@ void moveBossProjectiles(float speed) {
   static unsigned long lastMove = 0;
   float step = (float)speed / 60.0;
   if (step < 0.1) step = 0.1;
-
   for(int i=bossProjectiles.size()-1; i>=0; i--) {
       bossProjectiles[i].pos -= step;
       if (bossProjectiles[i].pos < config_homebase_size) {
@@ -855,7 +1093,6 @@ void handleSaveColors() {
     preferences.putString("cw", hex_cw);
     preferences.putString("cb", hex_cb);
     preferences.end();
-
     loadColors();
     server.sendHeader("Location", "/colors"); 
     server.send(303);
@@ -885,6 +1122,10 @@ void loadSounds() {
   melodyFromStr(melShotWhite, cfg_snd_shot_w);
   melodyFromStr(melFinalWin, DEF_SND_FINAL_WIN);
   melodyFromStr(melSpeedUp, DEF_SND_SPEEDUP);
+  
+  melodyFromStr(melShotY, DEF_SND_SHOT_Y);
+  melodyFromStr(melShotM, DEF_SND_SHOT_M);
+  melodyFromStr(melShotC, DEF_SND_SHOT_C);
 }
 
 void handleSaveSounds() {
@@ -922,27 +1163,27 @@ void applyProfileDefaults(String prefix) {
     levels[2] = {6, 20, 0}; 
     levels[3] = {7, 25, 2}; 
     levels[4] = {8, 30, 0};
-    levels[5] = {9, 35, 0}; 
+    levels[5] = {9, 35, 0};
     levels[6] = {10, 40, 1}; 
     levels[7] = {20, 20, 0}; levels[8] = {20, 25, 0};
-    levels[9] = {10, 60, 0}; 
+    levels[9] = {10, 60, 0};
     levels[10] = {14, 60, 3}; 
     boss1Cfg = {4, 60, 4, 30, 0, 0,0,0};
     boss2Cfg = {10, 60, 5, 40, 0, 85, 55, 30}; 
     boss3Cfg = {7, 50, 3, 60, 3, 0,0,0};
   } else if (prefix == "kid_") {
     levels[1] = {5, 15, 0};
-    levels[2] = {5, 20, 0}; levels[3] = {6, 25, 2}; 
+    levels[2] = {5, 20, 0};
+    levels[3] = {6, 25, 2}; 
     levels[4] = {6, 20, 0}; levels[5] = {7, 25, 0};
-    levels[6] = {10, 40, 1}; 
+    levels[6] = {10, 40, 1};
     levels[7] = {8, 30, 0}; levels[8] = {8, 35, 0}; levels[9] = {10, 20, 0};
-    levels[10] = {14, 60, 3}; 
+    levels[10] = {14, 60, 3};
     boss1Cfg = {4, 60, 2, 40, 0, 0,0,0};
-    boss2Cfg = {7, 40, 3, 40, 0, 85, 55, 30}; 
+    boss2Cfg = {7, 40, 3, 40, 0, 85, 55, 30};
     boss3Cfg = {4, 40, 1, 80, 1, 0,0,0};
   } else { 
-    for(int i=1; i<=10; i++) { levels[i] = {5+i, 15+(i*5), 0};
-    }
+    for(int i=1; i<=10; i++) { levels[i] = {5+i, 15+(i*5), 0}; }
     levels[3].bossType=2; levels[6].bossType=1; levels[10].bossType=3;
     boss1Cfg = {6, 80, 5, 25, 0, 0,0,0};
     boss2Cfg = {15, 80, 6, 30, 0, 90, 60, 30}; 
@@ -1014,7 +1255,8 @@ void loadConfig(String prefix) {
   config_brightness_pct = preferences.getInt((prefix+"bright").c_str(), config_brightness_pct);
   config_start_level = preferences.getInt((prefix+"startlvl").c_str(), config_start_level);
   config_ssid = preferences.getString("ssid", ""); config_pass = preferences.getString("pass", "");
-  config_static_ip = preferences.getBool("sip_on", false); config_ip = preferences.getString("sip_ip", "");
+  config_static_ip = preferences.getBool("sip_on", false);
+  config_ip = preferences.getString("sip_ip", "");
   config_gateway = preferences.getString("sip_gw", "");
   config_subnet = preferences.getString("sip_sn", ""); config_dns = preferences.getString("sip_dns", "");
   
@@ -1028,13 +1270,13 @@ void loadConfig(String prefix) {
   config_endless_mode = preferences.getBool("endless", false);
 
   for(int i=1; i<=10; i++) { 
-    levels[i].speed = preferences.getInt((prefix+"l"+String(i)+"s").c_str(), levels[i].speed); 
+    levels[i].speed = preferences.getInt((prefix+"l"+String(i)+"s").c_str(), levels[i].speed);
     levels[i].length = preferences.getInt((prefix+"l"+String(i)+"l").c_str(), levels[i].length);
     levels[i].bossType = preferences.getInt((prefix+"l"+String(i)+"b").c_str(), levels[i].bossType); 
   }
   
   if(preferences.isKey((prefix+"b1").c_str())) preferences.getBytes((prefix+"b1").c_str(), &boss1Cfg, sizeof(BossConfig)); 
-  if(preferences.isKey((prefix+"b2").c_str())) preferences.getBytes((prefix+"b2").c_str(), &boss2Cfg, sizeof(BossConfig)); 
+  if(preferences.isKey((prefix+"b2").c_str())) preferences.getBytes((prefix+"b2").c_str(), &boss2Cfg, sizeof(BossConfig));
   if(preferences.isKey((prefix+"b3").c_str())) preferences.getBytes((prefix+"b3").c_str(), &boss3Cfg, sizeof(BossConfig));
   preferences.end();
 }
@@ -1067,7 +1309,8 @@ void handleSave() {
   if(server.hasArg("vol")) config_volume_pct = server.arg("vol").toInt();
 
   preferences.begin("game", false); 
-  preferences.putString("ssid", config_ssid); preferences.putString("pass", config_pass); preferences.putBool("sip_on", config_static_ip); preferences.putString("sip_ip", config_ip); preferences.putString("sip_gw", config_gateway);
+  preferences.putString("ssid", config_ssid); preferences.putString("pass", config_pass); preferences.putBool("sip_on", config_static_ip); preferences.putString("sip_ip", config_ip);
+  preferences.putString("sip_gw", config_gateway);
   preferences.putString("sip_sn", config_subnet); preferences.putString("sip_dns", config_dns); 
   preferences.putBool("sac_led", config_sacrifice_led); preferences.putInt("hb_size", config_homebase_size);
   preferences.putInt("shot_spd", config_shot_speed_pct);
@@ -1075,21 +1318,24 @@ void handleSave() {
   preferences.putBool("snd_on", config_sound_on);
   preferences.putInt("snd_vol", config_volume_pct);
   preferences.putBool("endless", config_endless_mode);
-
   String p = currentProfilePrefix; preferences.putInt((p+"leds").c_str(), config_num_leds);
   preferences.putInt((p+"bright").c_str(), config_brightness_pct); preferences.putInt((p+"startlvl").c_str(), config_start_level); 
-  for(int i=1; i<=10; i++) { levels[i].speed = server.arg("lspd"+String(i)).toInt(); levels[i].length = server.arg("llen"+String(i)).toInt(); levels[i].bossType = server.arg("lboss"+String(i)).toInt(); preferences.putInt((p+"l"+String(i)+"s").c_str(), levels[i].speed);
+  for(int i=1; i<=10; i++) { levels[i].speed = server.arg("lspd"+String(i)).toInt();
+  levels[i].length = server.arg("llen"+String(i)).toInt(); levels[i].bossType = server.arg("lboss"+String(i)).toInt(); preferences.putInt((p+"l"+String(i)+"s").c_str(), levels[i].speed);
   preferences.putInt((p+"l"+String(i)+"l").c_str(), levels[i].length); preferences.putInt((p+"l"+String(i)+"b").c_str(), levels[i].bossType); } 
-  boss1Cfg.moveSpeed = server.arg("b1mv").toInt(); boss1Cfg.shotSpeed = server.arg("b1ss").toInt(); boss1Cfg.hpPerLed = server.arg("b1hp").toInt(); boss1Cfg.shotFreq = server.arg("b1fr").toInt();
+  boss1Cfg.moveSpeed = server.arg("b1mv").toInt();
+  boss1Cfg.shotSpeed = server.arg("b1ss").toInt(); boss1Cfg.hpPerLed = server.arg("b1hp").toInt(); boss1Cfg.shotFreq = server.arg("b1fr").toInt();
   preferences.putBytes((p+"b1").c_str(), &boss1Cfg, sizeof(BossConfig)); 
-  boss2Cfg.moveSpeed = server.arg("b2mv").toInt(); boss2Cfg.shotSpeed = server.arg("b2ss").toInt(); boss2Cfg.hpPerLed = server.arg("b2hp").toInt(); boss2Cfg.shotFreq = server.arg("b2fr").toInt(); 
+  boss2Cfg.moveSpeed = server.arg("b2mv").toInt(); boss2Cfg.shotSpeed = server.arg("b2ss").toInt();
+  boss2Cfg.hpPerLed = server.arg("b2hp").toInt(); boss2Cfg.shotFreq = server.arg("b2fr").toInt(); 
   boss2Cfg.m1 = server.arg("b2m1").toInt();
   boss2Cfg.m2 = server.arg("b2m2").toInt(); boss2Cfg.m3 = server.arg("b2m3").toInt(); 
-  preferences.putBytes((p+"b2").c_str(), &boss2Cfg, sizeof(BossConfig)); 
+  preferences.putBytes((p+"b2").c_str(), &boss2Cfg, sizeof(BossConfig));
   boss3Cfg.moveSpeed = server.arg("b3mv").toInt(); boss3Cfg.shotSpeed = 0; boss3Cfg.hpPerLed = server.arg("b3hp").toInt();
   boss3Cfg.shotFreq = server.arg("b3fr").toInt(); boss3Cfg.burstCount = server.arg("b3bc").toInt();
   preferences.putBytes((p+"b3").c_str(), &boss3Cfg, sizeof(BossConfig)); 
-  preferences.end(); server.send(200, "text/html", "<h2>Saved!</h2><p>ESP restarting...</p><a href='/'>Go Back</a>"); delay(1000); ESP.restart();
+  preferences.end();
+  server.send(200, "text/html", "<h2>Saved!</h2><p>ESP restarting...</p><a href='/'>Go Back</a>"); delay(1000); ESP.restart();
 }
 
 String getUpdateHTML() {
@@ -1177,25 +1423,21 @@ String getHTML() {
   h += "window.onload = function(){ updateCalc(); toggleIP(); };</script>";
   h += "</head><body>";
   h += "<div class='neon-text'>RGB INVADERS</div>";
-  h += "<div class='sub-head'>created by Qwer.Tzui / WorksAsDesigned - Version 10.7</div>";
+  h += "<div class='sub-head'>created by Qwer.Tzui / WorksAsDesigned - Version 10.9.2 (All Boss Fix)</div>";
   h += "<div class='score-box'>ALL TIME BEST<div class='big-score'>" + String(highScore) + "</div>";
   h += "<div class='small-score'>Last Games: " + String(lastGames[0]) + " | " + String(lastGames[1]) + " | " + String(lastGames[2]) + "</div></div>";
-  // STATS DISPLAY
   h += "<div class='sec'><h3>Battle Statistics</h3><div class='stat-grid'>";
   h += "<div class='stat-box'><div class='stat-val'>" + String(stat_totalShots) + "</div><div>Total Shots</div></div>";
   h += "<div class='stat-box'><div class='stat-val'>" + String(stat_totalKills) + "</div><div>Alien Kills</div></div>";
   h += "<div class='stat-box'><div class='stat-val'>" + String(stat_lastGameShots) + "</div><div>Last Game Shots</div></div>";
   h += "</div></div>";
-  // BUTTONS TO CONFIG PAGES
   h += "<div style='display:flex;gap:10px;justify-content:center;margin-bottom:20px;margin-top:20px;'>";
   h += "<a href='/sounds' style='flex:1;'><button style='background:#ff00ff;font-weight:bold;font-size:1.1em;padding:12px;'>🎵 SOUNDS</button></a>";
   h += "<a href='/colors' style='flex:1;'><button style='background:#00ffff;color:#000;font-weight:bold;font-size:1.1em;padding:12px;'>🎨 COLOR CONFIG</button></a>";
   h += "</div>";
 
-  String pName = (currentProfilePrefix == "def_") ?
-  "Standard" : ((currentProfilePrefix == "kid_") ? "Kids" : "Pro");
+  String pName = (currentProfilePrefix == "def_") ? "Standard" : ((currentProfilePrefix == "kid_") ? "Kids" : "Pro");
   h += "<div class='sec'><h3>Profile Management</h3>Current Profile: <b>" + pName + "</b><br><form action='/loadprofile' method='POST' style='display:flex;gap:5px;margin-top:5px;'><select name='profile'><option value='def' " + String(currentProfilePrefix=="def_"?"selected":"") + ">Standard</option><option value='kid' " + String(currentProfilePrefix=="kid_"?"selected":"") + ">Kids</option><option value='pro' " + String(currentProfilePrefix=="pro_"?"selected":"") + ">Pro/Party</option></select><button type='submit'>Load Profile</button></form></div>";
-  // Unlockable Level 11 Max
   String maxLvl = (stat_boss3Kills > 0) ? "11" : "10";
   h += "<form action='/save' method='POST'><div class='sec'><h3>Hardware & General</h3>Start Level: <input type='number' name='startlvl' min='1' max='" + maxLvl + "' value='" + String(config_start_level) + "'><br>";
   h += "Total LEDs: <input id='ledCount' type='number' name='leds' value='" + String(config_num_leds) + "' oninput='updateCalc()'><br>";
@@ -1208,9 +1450,8 @@ String getHTML() {
   h += "<label>Master Volume: <span id='volVal'>" + String(config_volume_pct) + "%</span></label><input type='range' name='vol' min='0' max='100' value='" + String(config_volume_pct) + "' oninput=\"document.getElementById('volVal').innerText = this.value + '%';\">";
   h += "</div>";
   
-  // UNLOCKABLE ENDLESS MODE CHECKBOX
   h += "<div style='margin-top:10px;border-top:1px dashed #555;padding-top:10px;background:#2a2a2a;padding:10px;border-radius:5px;'>";
-  String disab = (stat_boss3Kills > 0) ? "" : "disabled"; // Also disable input visually
+  String disab = (stat_boss3Kills > 0) ? "" : "disabled";
   h += "<label style='color:#00ff00;font-weight:bold;'>Endless Mode: <input type='checkbox' name='endless' value='1' " + String(config_endless_mode?"checked":"") + " onclick='return checkEndless(this)' style='width:auto;'></label><br><small>Unlocks infinite gameplay.</small>";
   h += "</div>";
 
@@ -1256,8 +1497,7 @@ String getHTML() {
 void enableWiFi() {
   FastLED.clear(); FastLED.show();
   WiFi.mode(WIFI_AP_STA);
-  if(config_ssid != "") { WiFi.begin(config_ssid.c_str(), config_pass.c_str());
-  }
+  if(config_ssid != "") { WiFi.begin(config_ssid.c_str(), config_pass.c_str()); }
   if(config_static_ip && config_ip.length() > 0) {
       IPAddress ip, gw, sn, dns;
       if(ip.fromString(config_ip) && gw.fromString(config_gateway) && sn.fromString(config_subnet)) {
@@ -1293,7 +1533,7 @@ void setup() {
   FastLED.setDither(0);
   
   // 4. POWER PROTECTION
-  FastLED.setMaxPowerInVoltsAndMilliamps(5, 2500); // 2.5 Amps limit
+  FastLED.setMaxPowerInVoltsAndMilliamps(5, 2500); 
   
   if(config_sacrifice_led) leds[0] = CRGB(20, 0, 0);
   FastLED.show();
@@ -1312,8 +1552,6 @@ void setup() {
   server.on("/savesounds", handleSaveSounds);
   server.on("/colors", []() { server.send(200, "text/html", getColorHTML()); });
   server.on("/savecolors", handleSaveColors);
-  
-  // Easter Egg Handler for Stats Restoration
   server.on("/admin/stats", [](){
       if(server.hasArg("hs")) highScore = server.arg("hs").toInt();
       if(server.hasArg("kills")) stat_totalKills = server.arg("kills").toInt(); 
@@ -1322,8 +1560,6 @@ void setup() {
       saveHighscores();
       server.send(200, "text/plain", "Stats restored manually.");
   });
-
-  // OTA HANDLERS
   server.on("/update", HTTP_GET, []() { server.send(200, "text/html", getUpdateHTML()); });
   server.on("/update", HTTP_POST, []() {
     server.send(200, "text/plain", (Update.hasError()) ? "UPDATE FAILED" : "UPDATE SUCCESS! RESTARTING...");
@@ -1354,20 +1590,16 @@ void loop() {
       FastLED.show();
     }
     // EXIT WIFI MODE
-    if (digitalRead(PIN_BTN_WHITE) == LOW) { delay(200);
-    ESP.restart(); }
+    if (digitalRead(PIN_BTN_WHITE) == LOW) { delay(200); ESP.restart(); }
     return;
   }
 
   // 6. SETUP MODE FEEDBACK
   if (digitalRead(PIN_BTN_WHITE) == LOW) {
-    if (!btnWhiteHeld) { btnWhiteHeld = true;
-    btnWhitePressTime = now; } 
+    if (!btnWhiteHeld) { btnWhiteHeld = true; btnWhitePressTime = now; } 
     else { 
-       // Feedback if held > 3s
        if (now - btnWhitePressTime > 3000) { 
            FastLED.clear();
-           // Blink Blue/Black every 250ms
            if ((now / 250) % 2 == 0) {
                for(int i=0; i<config_num_leds; i+=2) leds[i+ledStartOffset] = CRGB::Blue;
            }
@@ -1376,30 +1608,30 @@ void loop() {
        }
     }
   } else {
-    // RELEASED
     if (btnWhiteHeld) {
       unsigned long holdTime = now - btnWhitePressTime;
       btnWhiteHeld = false;
       if (holdTime > 3000) { 
-          wifiMode = true;
-          enableWiFi(); return; 
+          wifiMode = true; enableWiFi(); return; 
       } else if (holdTime < 1000) {
           startLevelIntro(config_start_level);
       }
     }
   }
 
-  // GAME STATES
+  // GAME STATES DISPATCHER
   if (currentState == STATE_LEVEL_COMPLETED) { updateLevelCompletedAnim(); return; }
   if (currentState == STATE_BASE_DESTROYED) { updateBaseDestroyedAnim(); return; } 
   if (currentState == STATE_GAME_FINISHED) { for(int i=0; i<config_num_leds; i++) leds[i+ledStartOffset] = CHSV((now/10)+(i*5), 255, 255);
-  if(config_sacrifice_led) leds[0]=CRGB(20,0,0); FastLED.show(); return; }
+    if(config_sacrifice_led) leds[0]=CRGB(20,0,0); FastLED.show(); return; }
   if (currentState == STATE_GAMEOVER) { for(int i=0; i<config_num_leds; i++) leds[i+ledStartOffset] = CRGB::Red; if(config_sacrifice_led) leds[0]=CRGB(20,0,0);
-  FastLED.show(); return; }
+    FastLED.show(); return; }
   
   if (currentState == STATE_INTRO) { updateLevelIntro(); return; }
   if (currentState == STATE_BONUS_INTRO) { updateBonusIntro(); return; }
+  
   if (currentState == STATE_BONUS_PLAYING) { updateBonusGame(); return; }
+  if (currentState == STATE_BONUS_SIMON)   { updateSimonBonus(); return; }
 
   // MAIN GAME LOGIC
   if (currentState == STATE_PLAYING || currentState == STATE_BOSS_PLAYING) {
@@ -1427,7 +1659,8 @@ void loop() {
             lastFireTime = now; 
             playShotSound(c);
           } 
-          buttonsReleased = false; isWaitingForCombo = false;
+          buttonsReleased = false;
+          isWaitingForCombo = false;
         }
     } else {
        if (isAnyBtnPressed && buttonsReleased && (now - lastFireTime > FIRE_COOLDOWN)) {
@@ -1484,15 +1717,21 @@ void loop() {
           }
 
           // BOSS SEGMENT COLLISION
-          if (!remove && shots[i].position >= enemyFrontIndex && !bossSegments.empty()) { 
-             int hitIndex = (int)(shots[i].position - enemyFrontIndex);
+          if (!remove && shots[i].position >= enemyFrontIndex - 0.5 && !bossSegments.empty()) { 
+             
+             // GENERAL CLAMPING LOGIC FOR ALL BOSSES (v10.9.2 FIX)
+             int hitIndex = (int)round(shots[i].position - enemyFrontIndex);
+             
+             // Prevent Tunneling: If shot is 'deep' inside/behind, clamp to last segment
+             if (hitIndex >= bossSegments.size()) hitIndex = bossSegments.size() - 1;
+             if (hitIndex < 0) hitIndex = 0;
+
+             // Now hitIndex is always valid [0, size-1]
              if (hitIndex >= 0 && hitIndex < bossSegments.size()) { 
                bool vulnerable = false;
                if (currentBossType == 1) vulnerable = true; 
-               else if (currentBossType == 2) { if (boss2State == B2_MOVE && bossSegments[hitIndex].active) vulnerable = true;
-               } 
-               else if (currentBossType == 3) { if (boss3State != B3_PHASE_CHANGE) vulnerable = true;
-               } 
+               else if (currentBossType == 2) { if (boss2State == B2_MOVE && bossSegments[hitIndex].active) vulnerable = true; } 
+               else if (currentBossType == 3) { if (boss3State != B3_PHASE_CHANGE) vulnerable = true; } 
                
                if (vulnerable) { 
                  if (shots[i].color == bossSegments[hitIndex].color) { 
@@ -1506,14 +1745,16 @@ void loop() {
                     } 
                     checkWinCondition();
                  } else {
-                    // BOSS 1 (Tank) RAGE TRIGGER
-                    if (currentBossType == 1 && !boss1RageMode) {
-                        boss1WrongHits++;
-                        if (boss1WrongHits >= 3) {
-                            boss1RageMode = true;
-                            boss1RageShots = 5; 
-                            bossActionTimer = now;
-                        }
+                    if (currentBossType == 1) {
+                         currentScore = (currentScore > 50) ? currentScore - 50 : 0;
+                         if(!boss1RageMode) {
+                            boss1WrongHits++;
+                            if (boss1WrongHits >= 3) {
+                                boss1RageMode = true;
+                                boss1RageShots = 5; 
+                                bossActionTimer = now;
+                            }
+                         }
                     }
                  }
                } remove = true;
@@ -1530,18 +1771,15 @@ void loop() {
         int mapLevel = currentLevel;
         if(currentLevel > 10) mapLevel = ((currentLevel - 1) % 10) + 1;
         spdVal = levels[mapLevel].speed;
-        
         float enemySpeed = (float)spdVal;
         float eStep = enemySpeed / 60.0; 
         enemyFrontIndex -= eStep; 
-        if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction();
-        } 
+        if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction(); } 
     }
     else if (currentState == STATE_BOSS_PLAYING) {
       int pSpeed = 60;
       if (currentBossType == 1) pSpeed = boss1Cfg.shotSpeed; if (currentBossType == 2) pSpeed = boss2Cfg.shotSpeed; 
       moveBossProjectiles((float)pSpeed);
-      
       if (currentBossType == 1) { // THE TANK
         float bStep = (float)boss1Cfg.moveSpeed / 60.0;
         enemyFrontIndex -= bStep;
@@ -1553,7 +1791,8 @@ void loop() {
                  int frontColor = 1; 
                  if(!bossSegments.empty()) frontColor = bossSegments[0].color;
                  int rageColor = 0;
-                 do { rageColor = random(1, 4); } while (rageColor == frontColor);
+                 do { rageColor = random(1, 4);
+                 } while (rageColor == frontColor);
                  bossProjectiles.push_back({enemyFrontIndex, rageColor}); 
                  boss1RageShots--;
                  if (boss1RageShots <= 0) {
@@ -1572,7 +1811,7 @@ void loop() {
                   } while(shotColor == frontColor && frontColor > 0);
                }
                bossProjectiles.push_back({enemyFrontIndex, shotColor});
-            } 
+             } 
         }
       }
       else if (currentBossType == 2) { // MASTERBLASTER
@@ -1580,7 +1819,7 @@ void loop() {
              float bStep = (float)boss2Cfg.moveSpeed / 60.0;
              enemyFrontIndex -= bStep;
              if (boss2Section < 3) { if (enemyFrontIndex <= markerPos[boss2Section]) { 
-                 boss2State = B2_CHARGE; 
+                 boss2State = B2_CHARGE;
                  bossActionTimer = now;
                  int startRangeOfNewSection = 0;
                  if (boss2Section == 0) startRangeOfNewSection = 0;
@@ -1592,26 +1831,24 @@ void loop() {
                  }
                  boss2TargetShots = 10 + (oldSurvivors * 3);
              } } 
-             if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction();
-             } 
+             if (enemyFrontIndex <= config_homebase_size) { triggerBaseDestruction(); } 
           }
           else if (boss2State == B2_CHARGE) { if (now - bossActionTimer < (boss2Cfg.shotFreq * 100)) { if (now % 100 < 20) boss2LockedColor = random(1,4);
-          } else { boss2State = B2_SHOOT; boss2ShotsFired = 0; bossActionTimer = now; int startRange = 0; int endRange = 0;
-          if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=0; endRange=5; } else { startRange=0;
-          endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.color = boss2LockedColor;
-          } } } else if (boss2State == B2_SHOOT) { if (now - bossActionTimer > 150) { bossActionTimer = now;
-          bossProjectiles.push_back({enemyFrontIndex, boss2LockedColor}); boss2ShotsFired++; 
+            } else { boss2State = B2_SHOOT; boss2ShotsFired = 0; bossActionTimer = now; int startRange = 0; int endRange = 0;
+            if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=0; endRange=5; } else { startRange=0;
+            endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.color = boss2LockedColor;
+            } } } else if (boss2State == B2_SHOOT) { if (now - bossActionTimer > 150) { bossActionTimer = now;
+            bossProjectiles.push_back({enemyFrontIndex, boss2LockedColor}); boss2ShotsFired++; 
           if (boss2ShotsFired >= boss2TargetShots) { // Variable shots
               int startRange = 0; int endRange = 0;
-              if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=3; endRange=5; } else { startRange=0;
-              endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.active = true;
+              if (boss2Section == 0) { startRange=0; endRange=2; } else if (boss2Section == 1) { startRange=3; endRange=5;
+              } else { startRange=0; endRange=8; } for(auto &seg : bossSegments) { if (seg.originalIndex >= startRange && seg.originalIndex <= endRange) seg.active = true;
               } boss2State = B2_MOVE; boss2Section++; } } } 
       }
       else if (currentBossType == 3) { // OVERLORD
         float safeFireLimit = (config_num_leds > 180) ? 70.0 : (float)(config_homebase_size + 5);
         if (boss3State == B3_MOVE && boss3PhaseIndex < 2 && enemyFrontIndex <= boss3Markers[boss3PhaseIndex]) {
-             boss3State = B3_PHASE_CHANGE;
-             bossActionTimer = now; 
+             boss3State = B3_PHASE_CHANGE; bossActionTimer = now; 
         }
 
         if (boss3State == B3_MOVE) {
@@ -1626,8 +1863,7 @@ void loop() {
         } 
         else if (boss3State == B3_PHASE_CHANGE) {
            if (now - bossActionTimer > 4000) { 
-               boss3State = B3_BURST;
-               boss3BurstCounter = 0; 
+               boss3State = B3_BURST; boss3BurstCounter = 0; 
                bossActionTimer = now; 
                for(auto &seg : bossSegments) seg.color = random(4, 8); 
                boss3PhaseIndex++;
@@ -1641,15 +1877,13 @@ void loop() {
                }
                boss3BurstCounter++;
                if (boss3BurstCounter >= boss3Cfg.burstCount) { 
-                   boss3State = B3_WAIT;
-                   bossActionTimer = now;
+                   boss3State = B3_WAIT; bossActionTimer = now;
                } 
            }
         }
         else if (boss3State == B3_WAIT) {
             if (now - bossActionTimer > 2000) {
-                boss3State = B3_MOVE;
-                bossActionTimer = now; 
+                boss3State = B3_MOVE; bossActionTimer = now; 
             }
         }
       }
@@ -1657,53 +1891,34 @@ void loop() {
     
     FastLED.clear();
     if (currentState == STATE_BOSS_PLAYING) {
-      if (currentBossType == 2) { for(int i=0; i<3; i++) { if (markerPos[i] < enemyFrontIndex) leds[markerPos[i]+ledStartOffset] = CRGB(50,0,0);
-      } }
+      if (currentBossType == 2) { for(int i=0; i<3; i++) { if (markerPos[i] < enemyFrontIndex) leds[markerPos[i]+ledStartOffset] = CRGB(50,0,0); } }
       else if (currentBossType == 3) { 
-          if(boss3PhaseIndex <= 0) {
-            leds[boss3Markers[0]+ledStartOffset] = CRGB(50,0,0);
-            leds[boss3Markers[0]+ledStartOffset+1] = CRGB(50,0,0); 
-          }
-          if(boss3PhaseIndex <= 1) {
-            leds[boss3Markers[1]+ledStartOffset] = CRGB(50,0,0);
-            leds[boss3Markers[1]+ledStartOffset+1] = CRGB(50,0,0); 
-          }
+          if(boss3PhaseIndex <= 0) { leds[boss3Markers[0]+ledStartOffset] = CRGB(50,0,0); leds[boss3Markers[0]+ledStartOffset+1] = CRGB(50,0,0); }
+          if(boss3PhaseIndex <= 1) { leds[boss3Markers[1]+ledStartOffset] = CRGB(50,0,0); leds[boss3Markers[1]+ledStartOffset+1] = CRGB(50,0,0); }
       }
     }
     if (currentState == STATE_PLAYING) { 
-        for(int i=0; i<enemies.size(); i++) { 
-            float pos = enemyFrontIndex + (float)i;
-            drawCrispPixel(pos, getColor(enemies[i].color)); 
-        } 
+        for(int i=0; i<enemies.size(); i++) { drawCrispPixel(enemyFrontIndex + (float)i, getColor(enemies[i].color)); } 
     } 
     else if (currentState == STATE_BOSS_PLAYING) { 
       for(int i=0; i<bossSegments.size(); i++) { 
         float pos = enemyFrontIndex + (float)i;
         if (pos < config_num_leds && pos >=0) { 
            CRGB c = getColor(bossSegments[i].color);
+           if (currentBossType == 1 && boss1RageMode) { if ((millis() / 50) % 2 == 0) c = CRGB::White; }
            
-           if (currentBossType == 1 && boss1RageMode) {
-               if ((millis() / 50) % 2 == 0) c = CRGB::White; 
-           }
-           
-           if (currentBossType == 2) { c = col_cb; if (boss2State == B2_MOVE) { if (bossSegments[i].active) { c = getColor(bossSegments[i].color);
-           if ((millis()/100)%2 == 0) c = CRGB::Black; } } else if (boss2State == B2_CHARGE || boss2State == B2_SHOOT) { int oid = bossSegments[i].originalIndex;
-           bool highlight = false; if (boss2Section == 0) { if (oid >= 0 && oid <= 2) highlight = true;
-           } else if (boss2Section == 1) { if (oid >= 0 && oid <= 5) highlight = true;
-           } else if (boss2Section >= 2) { highlight = true; } if (highlight) c = getColor(boss2LockedColor);
-           } } 
-           else if (currentBossType == 3 && boss3State == B3_PHASE_CHANGE) { c = CRGB::White;
-           } 
+           if (currentBossType == 2) { c = col_cb;
+           if (boss2State == B2_MOVE) { if (bossSegments[i].active) { c = getColor(bossSegments[i].color); if ((millis()/100)%2 == 0) c = CRGB::Black; } } 
+           else if (boss2State == B2_CHARGE || boss2State == B2_SHOOT) { int oid = bossSegments[i].originalIndex; bool highlight = false;
+           if (boss2Section == 0) { if (oid >= 0 && oid <= 2) highlight = true; } else if (boss2Section == 1) { if (oid >= 0 && oid <= 5) highlight = true;
+           } else if (boss2Section >= 2) { highlight = true; } if (highlight) c = getColor(boss2LockedColor); } } 
+           else if (currentBossType == 3 && boss3State == B3_PHASE_CHANGE) { c = CRGB::White; } 
            drawCrispPixel(pos, c);
         } 
       } 
-      for(auto &p : bossProjectiles) { 
-          drawCrispPixel(p.pos, getColor(p.color));
-      } 
+      for(auto &p : bossProjectiles) { drawCrispPixel(p.pos, getColor(p.color)); } 
     }
-    for(auto &s : shots) { 
-        drawCrispPixel(s.position, getColor(s.color));
-    }
+    for(auto &s : shots) { drawCrispPixel(s.position, getColor(s.color)); }
     for(int i=0; i<config_homebase_size; i++) leds[i+ledStartOffset] = CRGB::White;
     if(config_sacrifice_led) leds[0] = CRGB(20,0,0); 
     FastLED.show();
