@@ -1,5 +1,5 @@
 // ==========================================================================
-// PROJECT: ULTIMATE RGB INVADERS - V10.9.2 (ALL BOSS HITBOX FIX)
+// PROJECT: ULTIMATE RGB INVADERS - V10.9.3 (BALANCING FIX)
 // HARDWARE: ESP32-S3 (N16), MAX98357A, WS2812B
 // CORE VERSION: 2.0.17 (Required!)
 // ==========================================================================
@@ -33,7 +33,7 @@
 #define PIN_BTN_GREEN   17
 #define PIN_BTN_WHITE   18 
 
-#define CONFIG_VERSION  39 // Version 10.9.2
+#define CONFIG_VERSION  40 // Version 10.9.3
 #define FRAME_DELAY     16 // ~60 FPS
 #define INPUT_BUFFER_MS 60 
 #define SAMPLE_RATE     44100
@@ -447,14 +447,13 @@ void calculateLevelScore() {
   
   unsigned long targetTime = 0;
   
-  // BALANCING BOSS 1 (Tank)
-  if (currentLevel <= 10 && levels[currentLevel].bossType == 1) {
-      targetTime = 25000; 
-  }
-  else if (currentLevel <= 10 && levels[currentLevel].bossType == 2) {
-      targetTime = 38000;
+  // BALANCING
+  if (currentLevel <= 10 && levels[currentLevel].bossType == 2) {
+      // MASTERBLASTER (Boss 2): Harder Time Limit
+      targetTime = 36000;
   }
   else {
+      // Tank & Normal Levels: Standard calc
       unsigned long travelTime = config_num_leds * 15;
       unsigned long processingTime = entityCount * 300; 
       targetTime = 3000 + travelTime + processingTime;
@@ -1423,7 +1422,7 @@ String getHTML() {
   h += "window.onload = function(){ updateCalc(); toggleIP(); };</script>";
   h += "</head><body>";
   h += "<div class='neon-text'>RGB INVADERS</div>";
-  h += "<div class='sub-head'>created by Qwer.Tzui / WorksAsDesigned - Version 10.9.2 (All Boss Fix)</div>";
+  h += "<div class='sub-head'>created by Qwer.Tzui / WorksAsDesigned - Version 10.9.3 (Balancing Fix)</div>";
   h += "<div class='score-box'>ALL TIME BEST<div class='big-score'>" + String(highScore) + "</div>";
   h += "<div class='small-score'>Last Games: " + String(lastGames[0]) + " | " + String(lastGames[1]) + " | " + String(lastGames[2]) + "</div></div>";
   h += "<div class='sec'><h3>Battle Statistics</h3><div class='stat-grid'>";
