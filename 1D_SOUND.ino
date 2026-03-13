@@ -1,7 +1,7 @@
 // ==========================================================================
-// PROJECT: ULTIMATE RGB INVADERS - V10.9.3 (BALANCING FIX)
+// PROJECT: ULTIMATE RGB INVADERS - V10.9.5 (Simon says fix)
 // HARDWARE: ESP32-S3 (N16), MAX98357A, WS2812B
-// CORE VERSION: 2.0.17 (Required!)
+// CORE VERSION: 2.0.17 (Required!) I2S driver issues with 3.x.x
 // ==========================================================================
 
 #include <WiFi.h>
@@ -33,7 +33,7 @@
 #define PIN_BTN_GREEN   17
 #define PIN_BTN_WHITE   18 
 
-#define CONFIG_VERSION  40 // Version 10.9.3
+#define CONFIG_VERSION  42 // Version 10.9.5
 #define FRAME_DELAY     16 // ~60 FPS
 #define INPUT_BUFFER_MS 60 
 #define SAMPLE_RATE     44100
@@ -619,6 +619,12 @@ void updateSimonBonus() {
                 simonState = S_SHOW;
                 simonPlaybackIdx = 0;
                 simonTimer = now;
+                
+                // ====================================================================
+                // FIX: Spiele den ersten Ton direkt beim Start der Wiedergabe ab, 
+                // da das Licht ebenfalls sofort eingeschaltet wird!
+                // ====================================================================
+                playShotSound(simonFullSequence[simonPlaybackIdx]);
             }
             break;
         }
@@ -628,10 +634,16 @@ void updateSimonBonus() {
             if (simonStage >= 7) delayMs = 300;
 
             if (now - simonTimer > delayMs) {
+                // ====================================================================
+                // FIX: Zuerst den Index erhöhen, da das Delay abgelaufen ist.
+                // Danach sofort den Ton für den NEUEN Index aufrufen, um ihn mit 
+                // der LED zu synchronisieren.
+                // ====================================================================
+                simonPlaybackIdx++;
+                simonTimer = now;
+                
                 if (simonPlaybackIdx < currentSeqLen) {
                     playShotSound(simonFullSequence[simonPlaybackIdx]);
-                    simonPlaybackIdx++;
-                    simonTimer = now;
                 } else {
                     simonState = S_INPUT;
                     simonInputIdx = 0;
@@ -1422,7 +1434,7 @@ String getHTML() {
   h += "window.onload = function(){ updateCalc(); toggleIP(); };</script>";
   h += "</head><body>";
   h += "<div class='neon-text'>RGB INVADERS</div>";
-  h += "<div class='sub-head'>created by Qwer.Tzui / WorksAsDesigned - Version 10.9.3 (Balancing Fix)</div>";
+h += "<div class='sub-head'>created by WorksAsDesigned - <span style='cursor:pointer; text-decoration:underline;' onclick='alert(\"Thanks janosch12 for finding the simon says sound bug :-)\")'>Version 10.9.5 </span></div>";
   h += "<div class='score-box'>ALL TIME BEST<div class='big-score'>" + String(highScore) + "</div>";
   h += "<div class='small-score'>Last Games: " + String(lastGames[0]) + " | " + String(lastGames[1]) + " | " + String(lastGames[2]) + "</div></div>";
   h += "<div class='sec'><h3>Battle Statistics</h3><div class='stat-grid'>";
